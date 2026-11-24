@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calcio Balilla Pro - Gestione Tornei</title>
+  <script src="https://tailwindcss.com"></script>
+  <script src="https://jsdelivr.net"></script>
+  <style>
+    :root {
+      --colore-casa: #CC0605;
+      --colore-ospite: #154889;
+      --colore-campo: #2D7138;
+    }
+    .bg-casa { background-color: var(--colore-casa); }
+    .text-casa { color: var(--colore-casa); }
+    .bg-ospite { background-color: var(--colore-ospite); }
+    .text-ospite { color: var(--colore-ospite); }
+    .bg-campo { background-color: var(--colore-campo); }
+    .text-campo { color: var(--colore-campo); }
+    .border-campo { border-color: var(--colore-campo); }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <script>
+    const SUPABASE_URL = 'https://supabase.co';
+    const SUPABASE_ANON_KEY = 'INCOLLA_QUI_LA_TUA_CHIAVE_ANON_PUBLIC';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+
+  <header class="bg-campo text-white shadow-lg border-b-4 border-white/30 sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <img id="header-logo" src="" alt="Logo" class="h-11 w-11 rounded-full object-cover bg-white p-0.5 hidden border-2 border-white shadow" />
+        <div id="header-default-icon" class="h-11 w-11 rounded-full bg-white/20 flex items-center justify-center font-black text-xl border-2 border-white">⚽</div>
+        <div>
+          <h1 id="header-nome-circolo" class="font-black text-lg sm:text-xl tracking-wide uppercase">Calcio Balilla Pro</h1>
+          <p class="text-xs text-white/80">Portale Ufficiale Tornei</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select id="selettore-circolo" onchange="cambiaCircolo(this.value)" class="bg-white/15 text-white text-sm rounded-lg px-2.5 py-1.5 border border-white/30 focus:outline-none">
+          <option value="" class="text-slate-800">Seleziona Circolo...</option>
+        </select>
+        <button id="btn-login-modal" onclick="apriModalLogin()" class="bg-white text-slate-900 font-bold text-xs sm:text-sm px-3 py-1.5 rounded-lg shadow hover:bg-slate-100">
+          Area Admin
+        </button>
+        <div id="user-badge" class="hidden flex items-center gap-2">
+          <span id="user-role-label" class="bg-black/30 text-xs font-bold px-2.5 py-1 rounded-full uppercase"></span>
+          <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg">Esci</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="bg-white shadow-sm border-b sticky top-[68px] z-30">
+    <div class="max-w-6xl mx-auto px-4 flex overflow-x-auto gap-1 py-2 text-sm font-bold">
+      <button onclick="mostraSezione('live')" id="tab-live" class="nav-btn px-4 py-2 rounded-lg bg-campo text-white whitespace-nowrap">🏆 Torneo Live & Classifica</button>
+      <button onclick="mostraSezione('admin-torneo')" id="tab-admin-torneo" class="nav-btn hidden px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap">⚙️ Nuovo Torneo & Sorteggio</button>
+      <button onclick="mostraSezione('admin-giocatori')" id="tab-admin-giocatori" class="nav-btn hidden px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap">👥 Giocatori & Stile Circolo</button>
+      <button onclick="mostraSezione('super-admin')" id="tab-super-admin" class="nav-btn hidden px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap">👑 Gestione Circoli (Super Admin)</button>
+    </div>
+  </nav>
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
+
+    <div id="no-circolo-alert" class="bg-white rounded-2xl shadow p-8 text-center max-w-lg mx-auto mt-8">
+      <div class="text-5xl mb-3">⚽</div>
+      <h2 class="text-xl font-black text-slate-800 mb-2">Benvenuto in Calcio Balilla Pro</h2>
+      <p class="text-slate-600 text-sm">Seleziona un circolo dal menu in alto per vedere i tornei, oppure accedi come <b>Super Amministratore</b> per creare il primo circolo.</p>
+    </div>
+
+    <section id="sec-live" class="hidden space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Torneo Selezionato</span>
+          <select id="select-torneo-attivo" onchange="caricaDettagliTorneo(this.value)" class="block mt-1 font-black text-lg text-slate-800 bg-slate-50 border rounded-lg px-3 py-1.5"></select>
+        </div>
+        <div id="info-regole-torneo" class="flex flex-wrap gap-2 text-xs font-bold"></div>
+      </div>
+
+      <div>
+        <h3 class="font-black text-base uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
+          <span class="inline-block w-3 h-3 rounded-full bg-green-500 animate-pulse"></span> Partite in Corso ai Biliardini
+        </h3>
+        <div id="grid-biliardini" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 space-y-4">
+          <h3 class="font-black text-base uppercase tracking-wider text-slate-700">📊 Classifica</h3>
+          <div id="box-classifiche" class="space-y-4"></div>
+        </div>
+        <div class="lg:col-span-7 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-black text-base uppercase tracking-wider text-slate-700">📋 Calendario & Coda Partite</h3>
+            <button id="btn-genera-finali" onclick="generaFaseFinale()" class="hidden bg-amber-500 hover:bg-amber-600 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow">
+              Genera Tabellone Finale →
+            </button>
+          </div>
+          <div id="lista-partite" class="space-y-2.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-admin-torneo" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-xl font-black mb-4 text-slate-800">⚙️ Configura Nuovo Torneo</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+          <div>
+            <label class="font-bold block mb-1">Nome Torneo</label>
+            <input id="t-nome" type="text" placeholder="Es. Torneo del Venerdì" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="font-bold block mb-1">Formula Torneo</label>
+            <select id="t-formula" onchange="toggleGironiOption()" class="w-full border rounded-lg px-3 py-2">
+              <option value="italiana">Girone Unico (All'italiana)</option>
+              <option value="gironi">Fase a Gironi + Tabellone Finale</option>
+            </select>
+          </div>
+          <div id="box-qualificati" class="hidden">
+            <label class="font-bold block mb-1">Qualificati per Girone</label>
+            <select id="t-qualificati" class="w-full border rounded-lg px-3 py-2">
+              <option value="2">Prime 2 di ogni girone</option>
+              <option value="99">Passano tutte (Incroci testa-coda)</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold block mb-1">Gol per Vincere (Target)</label>
+            <input id="t-target" type="number" value="8" min="5" max="15" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="font-bold block mb-1">Regola Vittoria / Punti</label>
+            <select id="t-regola" class="w-full border rounded-lg px-3 py-2">
+              <option value="secca">Partita Secca (es. 8-7 = 2pt / 1pt)</option>
+              <option value="spareggio">Spareggio sul pari (es. 7-7 → ai 9: 9-7=3pt, 9-8=2pt)</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold block mb-1">Numero Biliardini Disponibili</label>
+            <input id="t-biliardini" type="number" value="2" min="1" max="10" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="font-bold block mb-1">Memoria Anti-Coppia (Tornei precedenti)</label>
+            <select id="t-storico" class="w-full border rounded-lg px-3 py-2">
+              <option value="0">0 - Nessun vincolo</option>
+              <option value="1" selected>1 - Evita coppie ultimo torneo</option>
+              <option value="2">2 - Evita coppie ultimi 2 tornei</option>
+              <option value="3">3 - Evita coppie ultimi 3 tornei</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="my-6" />
+
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="font-black text-base">Seleziona Giocatori Presenti (<span id="count-selezionati" class="text-campo">0</span> selezionati)</h3>
+            <p class="text-xs text-slate-500">Deve essere un numero pari.</p>
+          </div>
+          <button onclick="sorteggiaEApriAnteprima()" class="bg-campo hover:opacity-90 text-white font-black px-5 py-2.5 rounded-xl shadow">
+            🎲 Sorteggia Coppie Bilanciate
+          </button>
+        </div>
+
+        <div id="lista-selezione-giocatori" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-96 overflow-y-auto p-1"></div>
+      </div>
+
+      <div id="box-anteprima-coppie" class="hidden bg-white rounded-2xl shadow-sm p-6 border-2 border-campo">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-lg font-black text-campo">✅ Coppie Sorteggiate</h3>
+            <p id="msg-storico-sorteggio" class="text-xs text-slate-500"></p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="sorteggiaEApriAnteprima()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm px-4 py-2 rounded-xl">🔄 Risorteggia</button>
+            <button onclick="avviaTorneoUfficiale()" class="bg-casa hover:opacity-90 text-white font-black text-sm px-5 py-2 rounded-xl shadow">🚀 Avvia Torneo</button>
+          </div>
+        </div>
+        <div id="grid-anteprima-coppie" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+      </div>
+    </section>
+    <section id="sec-admin-giocatori" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-black">🎨 Personalizza Colori & Logo del Circolo</h2>
+          <button onclick="ripristinaColoriDefault()" class="text-xs font-bold underline text-slate-500 hover:text-slate-800">Ripristina Colori Biliardino</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
+          <div>
+            <label class="font-bold block mb-1">URL Logo (opzionale)</label>
+            <input id="cfg-logo" type="text" placeholder="https://..." class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="font-bold block mb-1">Colore Squadra Casa</label>
+            <input id="cfg-colore-casa" type="color" value="#CC0605" class="w-full h-10 rounded cursor-pointer border" />
+          </div>
+          <div>
+            <label class="font-bold block mb-1">Colore Squadra Ospite</label>
+            <input id="cfg-colore-ospite" type="color" value="#154889" class="w-full h-10 rounded cursor-pointer border" />
+          </div>
+          <div>
+            <label class="font-bold block mb-1">Colore Campo / Intestazione</label>
+            <input id="cfg-colore-campo" type="color" value="#2D7138" class="w-full h-10 rounded cursor-pointer border" />
+          </div>
+        </div>
+        <button onclick="salvaStileCircolo()" class="mt-4 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm px-4 py-2 rounded-lg">Salva Aspetto</button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-black mb-4">➕ Aggiungi Giocatore in Anagrafica</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+          <input id="g-nome" type="text" placeholder="Nome o Soprannome" class="border rounded-lg px-3 py-2" />
+          <select id="g-ruolo" class="border rounded-lg px-3 py-2">
+            <option value="Portiere">Portiere</option>
+            <option value="Attaccante">Attaccante</option>
+            <option value="Indifferente">Indifferente</option>
+          </select>
+          <select id="g-livello" class="border rounded-lg px-3 py-2">
+            <option value="1">Livello: Basso (1)</option>
+            <option value="2" selected>Livello: Medio (2)</option>
+            <option value="3">Livello: Alto (3)</option>
+          </select>
+          <button onclick="aggiungiGiocatore()" class="bg-campo text-white font-bold rounded-lg px-4 py-2 hover:opacity-90">Salva Giocatore</button>
+        </div>
+
+        <div class="mt-6 overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b text-slate-400 text-xs uppercase">
+                <th class="py-2">Giocatore</th>
+                <th class="py-2">Ruolo</th>
+                <th class="py-2">Livello</th>
+                <th class="py-2 text-right">Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="tabella-giocatori" class="divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-super-admin" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6 border-2 border-amber-400">
+        <h2 class="text-xl font-black mb-1">👑 Pannello Super Amministratore</h2>
+        <p class="text-xs text-slate-500 mb-4">Crea nuovi circoli/organizzatori indipendenti con link, logo e colori separati.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm mb-4">
+          <input id="sa-nome-circolo" type="text" placeholder="Nome Circolo (es. Bar Sport Roma)" class="border rounded-lg px-3 py-2" />
+          <input id="sa-slug-circolo" type="text" placeholder="Codice URL (es. bar-sport)" class="border rounded-lg px-3 py-2" />
+          <input id="sa-logo-circolo" type="text" placeholder="URL Logo (opzionale)" class="border rounded-lg px-3 py-2" />
+        </div>
+        <button onclick="creaNuovoCircolo()" class="bg-amber-500 hover:bg-amber-600 text-white font-black text-sm px-5 py-2.5 rounded-xl">
+          + Crea Circolo
+        </button>
+        <div class="mt-6 space-y-2" id="lista-circoli-sa"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal-login" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+      <h3 class="text-lg font-black mb-1">Accesso Gestione</h3>
+      <p class="text-xs text-slate-500 mb-4">Riservato ad Amministratori e Super Admin</p>
+      <div class="space-y-3 text-sm">
+        <input id="login-email" type="email" placeholder="Email" class="w-full border rounded-lg px-3 py-2" />
+        <input id="login-pass" type="password" placeholder="Password" class="w-full border rounded-lg px-3 py-2" />
+        <button onclick="eseguiLogin()" class="w-full bg-campo text-white font-black py-2.5 rounded-xl">Accedi</button>
+        <button onclick="chiudiModalLogin()" class="w-full text-slate-500 text-xs py-1">Annulla</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    let utenteCorrente = null;
+    let profiloUtente = null;
+    let circoli = [];
+    let circoloAttivo = null;
+    let giocatoriCircolo = [];
+    let coppieProvvisorie = [];
+    let torneoCorrente = null;
+    let squadreTorneo = [];
+    let partiteTorneo = [];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await verificaSessione();
+      await caricaCircoli();
+    });
+
+    async function verificaSessione() {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) {
+        utenteCorrente = session.user;
+        const { data } = await db.from('profili_utenti').select('*').eq('id', utenteCorrente.id).single();
+        profiloUtente = data;
+        if (profiloUtente) {
+          document.getElementById('btn-login-modal').classList.add('hidden');
+          document.getElementById('user-badge').classList.remove('hidden');
+          document.getElementById('user-role-label').textContent = profiloUtente.ruolo_sistema === 'super_admin' ? '👑 Super Admin' : '⚙️ Admin';
+          document.getElementById('tab-admin-torneo').classList.remove('hidden');
+          document.getElementById('tab-admin-giocatori').classList.remove('hidden');
+          if (profiloUtente.ruolo_sistema === 'super_admin') {
+            document.getElementById('tab-super-admin').classList.remove('hidden');
+          }
+        }
+      }
+    }
+
+    async function caricaCircoli() {
+      const { data } = await db.from('circoli').select('*').order('nome');
+      circoli = data || [];
+      const sel = document.getElementById('selettore-circolo');
+      sel.innerHTML = '<option value="" class="text-slate-800">Seleziona Circolo...</option>';
+      circoli.forEach(c => {
+        sel.innerHTML += `<option value="${c.id}" class="text-slate-800">${c.nome}</option>`;
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      const slugUrl = params.get('circolo');
+      if (slugUrl) {
+        const trovato = circoli.find(c => c.slug === slugUrl);
+        if (trovato) return cambiaCircolo(trovato.id);
+      }
+      if (profiloUtente && profiloUtente.circolo_id) return cambiaCircolo(profiloUtente.circolo_id);
+      if (circoli.length === 1) return cambiaCircolo(circoli.id);
+      renderListaCircoliSA();
+    }
+
+    async function cambiaCircolo(circoloId) {
+      if (!circoloId) return;
+      circoloAttivo = circoli.find(c => c.id === circoloId);
+      if (!circoloAttivo) return;
+
+      document.getElementById('selettore-circolo').value = circoloId;
+      document.getElementById('no-circolo-alert').classList.add('hidden');
+      document.getElementById('sec-live').classList.remove('hidden');
+
+      document.getElementById('header-nome-circolo').textContent = circoloAttivo.nome;
+      if (circoloAttivo.logo_url) {
+        document.getElementById('header-logo').src = circoloAttivo.logo_url;
+        document.getElementById('header-logo').classList.remove('hidden');
+        document.getElementById('header-default-icon').classList.add('hidden');
+      } else {
+        document.getElementById('header-logo').classList.add('hidden');
+        document.getElementById('header-default-icon').classList.remove('hidden');
+      }
+
+      document.documentElement.style.setProperty('--colore-casa', circoloAttivo.colore_casa || '#CC0605');
+      document.documentElement.style.setProperty('--colore-ospite', circoloAttivo.colore_ospite || '#154889');
+      document.documentElement.style.setProperty('--colore-campo', circoloAttivo.colore_campo || '#2D7138');
+
+      document.getElementById('cfg-logo').value = circoloAttivo.logo_url || '';
+      document.getElementById('cfg-colore-casa').value = circoloAttivo.colore_casa || '#CC0605';
+      document.getElementById('cfg-colore-ospite').value = circoloAttivo.colore_ospite || '#154889';
+      document.getElementById('cfg-colore-campo').value = circoloAttivo.colore_campo || '#2D7138';
+
+      await caricaGiocatori();
+      await caricaTorneiCircolo();
+      renderListaCircoliSA();
+    }
+
+    function ripristinaColoriDefault() {
+      document.getElementById('cfg-colore-casa').value = '#CC0605';
+      document.getElementById('cfg-colore-ospite').value = '#154889';
+      document.getElementById('cfg-colore-campo').value = '#2D7138';
+    }
+
+    async function salvaStileCircolo() {
+      if (!circoloAttivo) return alert('Seleziona prima un circolo');
+      const updates = {
+        logo_url: document.getElementById('cfg-logo').value.trim() || null,
+        colore_casa: document.getElementById('cfg-colore-casa').value,
+        colore_ospite: document.getElementById('cfg-colore-ospite').value,
+        colore_campo: document.getElementById('cfg-colore-campo').value
+      };
+      await db.from('circoli').update(updates).eq('id', circoloAttivo.id);
+      await caricaCircoli();
+      cambiaCircolo(circoloAttivo.id);
+      alert('Stile aggiornato!');
+    }
+    async function creaNuovoCircolo() {
+      const nome = document.getElementById('sa-nome-circolo').value.trim();
+      const slug = document.getElementById('sa-slug-circolo').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+      const logo_url = document.getElementById('sa-logo-circolo').value.trim() || null;
+      if (!nome || !slug) return alert('Inserisci Nome e Codice URL del circolo');
+
+      const { data, error } = await db.from('circoli').insert([{ nome, slug, logo_url }]).select().single();
+      if (error) return alert('Errore: ' + error.message);
+
+      document.getElementById('sa-nome-circolo').value = '';
+      document.getElementById('sa-slug-circolo').value = '';
+      document.getElementById('sa-logo-circolo').value = '';
+      await caricaCircoli();
+      cambiaCircolo(data.id);
+      alert('Circolo creato!');
+    }
+
+    function renderListaCircoliSA() {
+      const box = document.getElementById('lista-circoli-sa');
+      if (!box) return;
+      const baseUrl = window.location.origin + window.location.pathname;
+      box.innerHTML = circoli.map(c => `
+        <div class="flex flex-wrap items-center justify-between p-3 bg-slate-50 rounded-xl border text-sm">
+          <div>
+            <span class="font-black">${c.nome}</span>
+            <span class="block text-xs text-slate-500">Link diretto spettatori: <b>${baseUrl}?circolo=${c.slug}</b></span>
+          </div>
+          <button onclick="cambiaCircolo('${c.id}'); mostraSezione('live')" class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Gestisci</button>
+        </div>
+      `).join('');
+    }
+
+    async function caricaGiocatori() {
+      if (!circoloAttivo) return;
+      const { data } = await db.from('giocatori').select('*').eq('circolo_id', circoloAttivo.id).order('nome');
+      giocatoriCircolo = data || [];
+      renderTabellaGiocatori();
+      renderSelezioneGiocatoriTorneo();
+    }
+
+    async function aggiungiGiocatore() {
+      if (!circoloAttivo) return alert('Seleziona un circolo');
+      const nome = document.getElementById('g-nome').value.trim();
+      const ruolo = document.getElementById('g-ruolo').value;
+      const livello = parseInt(document.getElementById('g-livello').value);
+      if (!nome) return alert('Inserisci il nome del giocatore');
+
+      const { error } = await db.from('giocatori').insert([{ circolo_id: circoloAttivo.id, nome, ruolo, livello }]);
+      if (error) return alert('Errore: ' + error.message);
+      document.getElementById('g-nome').value = '';
+      await caricaGiocatori();
+    }
+
+    async function aggiornaGiocatoreRapido(id, campo, valore) {
+      const update = {};
+      update[campo] = campo === 'livello' ? parseInt(valore) : valore;
+      await db.from('giocatori').update(update).eq('id', id);
+      await caricaGiocatori();
+    }
+
+    function renderTabellaGiocatori() {
+      document.getElementById('tabella-giocatori').innerHTML = giocatoriCircolo.map(g => `
+        <tr>
+          <td class="py-2.5 font-bold">${g.nome}</td>
+          <td class="py-2.5">
+            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'ruolo', this.value)" class="border rounded px-2 py-1 text-xs">
+              <option value="Portiere" ${g.ruolo==='Portiere'?'selected':''}>Portiere</option>
+              <option value="Attaccante" ${g.ruolo==='Attaccante'?'selected':''}>Attaccante</option>
+              <option value="Indifferente" ${g.ruolo==='Indifferente'?'selected':''}>Indifferente</option>
+            </select>
+          </td>
+          <td class="py-2.5">
+            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'livello', this.value)" class="border rounded px-2 py-1 text-xs">
+              <option value="1" ${g.livello===1?'selected':''}>Basso (1)</option>
+              <option value="2" ${g.livello===2?'selected':''}>Medio (2)</option>
+              <option value="3" ${g.livello===3?'selected':''}>Alto (3)</option>
+            </select>
+          </td>
+          <td class="py-2.5 text-right">
+            <button onclick="eliminaGiocatore('${g.id}')" class="text-red-500 text-xs font-bold hover:underline">Elimina</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function eliminaGiocatore(id) {
+      if (!confirm('Eliminare questo giocatore dall\'anagrafica?')) return;
+      await db.from('giocatori').delete().eq('id', id);
+      await caricaGiocatori();
+    }
+    function renderSelezioneGiocatoriTorneo() {
+      document.getElementById('lista-selezione-giocatori').innerHTML = giocatoriCircolo.map(g => `
+        <label class="flex items-center justify-between p-2.5 border rounded-xl bg-slate-50 hover:bg-white cursor-pointer">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" value="${g.id}" onchange="aggiornaConteggioSelezionati()" class="chk-giocatore w-4 h-4 accent-green-700" />
+            <span class="font-bold text-sm">${g.nome}</span>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded bg-white border font-semibold">
+            ${g.ruolo === 'Portiere' ? '🧤 P' : g.ruolo === 'Attaccante' ? '⚡ A' : '🔄 Ind'} · Lv.${g.livello}
+          </span>
+        </label>
+      `).join('');
+      aggiornaConteggioSelezionati();
+    }
+
+    function aggiornaConteggioSelezionati() {
+      document.getElementById('count-selezionati').textContent = document.querySelectorAll('.chk-giocatore:checked').length;
+    }
+
+    function toggleGironiOption() {
+      document.getElementById('box-qualificati').classList.toggle('hidden', document.getElementById('t-formula').value !== 'gironi');
+    }
+
+    async function sorteggiaEApriAnteprima() {
+      const idsSelezionati = Array.from(document.querySelectorAll('.chk-giocatore:checked')).map(el => el.value);
+      if (idsSelezionati.length < 4 || idsSelezionati.length % 2 !== 0) {
+        return alert('Seleziona un numero PARI di giocatori (almeno 4).');
+      }
+
+      const numTorneiStorico = parseInt(document.getElementById('t-storico').value);
+      let coppieVietate = new Set();
+
+      if (numTorneiStorico > 0) {
+        const { data: ultimiTornei } = await db.from('tornei').select('id').eq('circolo_id', circoloAttivo.id).order('creato_il', { ascending: false }).limit(numTorneiStorico);
+        if (ultimiTornei && ultimiTornei.length > 0) {
+          const { data: vecchieSquadre } = await db.from('squadre').select('portiere_id, attaccante_id').in('torneo_id', ultimiTornei.map(t => t.id));
+          (vecchieSquadre || []).forEach(s => {
+            coppieVietate.add(`${s.portiere_id}_${s.attaccante_id}`);
+            coppieVietate.add(`${s.attaccante_id}_${s.portiere_id}`);
+          });
+        }
+      }
+
+      const presenti = giocatoriCircolo.filter(g => idsSelezionati.includes(g.id));
+      const numCoppie = presenti.length / 2;
+      let migliorSet = null, migliorPunteggio = Infinity, ripetizioniTrovate = 0;
+
+      for (let tentativo = 0; tentativo < 300; tentativo++) {
+        let portieri = presenti.filter(g => g.ruolo === 'Portiere').sort(() => Math.random() - 0.5);
+        let attaccanti = presenti.filter(g => g.ruolo === 'Attaccante').sort(() => Math.random() - 0.5);
+        let indifferenti = presenti.filter(g => g.ruolo === 'Indifferente').sort(() => Math.random() - 0.5);
+
+        while (portieri.length < numCoppie && indifferenti.length > 0) portieri.push(indifferenti.pop());
+        while (attaccanti.length < numCoppie && indifferenti.length > 0) attaccanti.push(indifferenti.pop());
+        while (portieri.length > numCoppie) attaccanti.push(portieri.pop());
+        while (attaccanti.length > numCoppie) portieri.push(attaccanti.pop());
+
+        portieri.sort((a, b) => a.livello - b.livello || Math.random() - 0.5);
+        attaccanti.sort((a, b) => b.livello - a.livello || Math.random() - 0.5);
+
+        let coppie = [], ripetizioni = 0, livelli = [];
+        for (let i = 0; i < numCoppie; i++) {
+          const p = portieri[i], a = attaccanti[i];
+          if (coppieVietate.has(`${p.id}_${a.id}`)) ripetizioni++;
+          const livTot = p.livello + a.livello;
+          livelli.push(livTot);
+          coppie.push({ portiere: p, attaccante: a, nome_squadra: `${p.nome} / ${a.nome}`, livello_totale: livTot, girone: 'A' });
+        }
+
+        const penalita = (ripetizioni * 100) + (Math.max(...livelli) - Math.min(...livelli));
+        if (penalita < migliorPunteggio) {
+          migliorPunteggio = penalita;
+          migliorSet = coppie;
+          ripetizioniTrovate = ripetizioni;
+        }
+      }
+
+      if (document.getElementById('t-formula').value === 'gironi' && migliorSet.length >= 4) {
+        migliorSet.forEach((c, idx) => { c.girone = idx % 2 === 0 ? 'A' : 'B'; });
+      }
+
+      coppieProvvisorie = migliorSet;
+      document.getElementById('box-anteprima-coppie').classList.remove('hidden');
+      document.getElementById('msg-storico-sorteggio').textContent = ripetizioniTrovate === 0
+        ? 'Nessuna coppia ripetuta rispetto allo storico impostato.'
+        : `Nota: ${ripetizioniTrovate} coppie ripetute per mancanza di combinazioni inedite.`;
+
+      document.getElementById('grid-anteprima-coppie').innerHTML = coppieProvvisorie.map(c => `
+        <div class="p-3 rounded-xl border bg-slate-50 flex justify-between items-center">
+          <div>
+            <span class="text-xs font-black uppercase px-2 py-0.5 rounded bg-campo text-white">Girone ${c.girone}</span>
+            <p class="font-black text-sm mt-1">🧤 ${c.portiere.nome}</p>
+            <p class="font-black text-sm">⚡ ${c.attaccante.nome}</p>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-slate-400 block">Forza</span>
+            <span class="font-black text-lg text-slate-700">${c.livello_totale}/6</span>
+          </div>
+        </div>
+      `).join('');
+    }
+    async function avviaTorneoUfficiale() {
+      const nome = document.getElementById('t-nome').value.trim() || `Torneo ${new Date().toLocaleDateString('it-IT')}`;
+      const formula = document.getElementById('t-formula').value;
+      const qualificati_per_girone = parseInt(document.getElementById('t-qualificati').value);
+      const target_gol = parseInt(document.getElementById('t-target').value);
+      const regola_punti = document.getElementById('t-regola').value;
+      const storico_blocco = parseInt(document.getElementById('t-storico').value);
+      const num_biliardini = parseInt(document.getElementById('t-biliardini').value);
+
+      const { data: nuovoTorneo, error } = await db.from('tornei').insert([{
+        circolo_id: circoloAttivo.id, nome, formula, qualificati_per_girone,
+        target_gol, regola_punti, storico_blocco, num_biliardini
+      }]).select().single();
+      if (error) return alert('Errore creazione torneo: ' + error.message);
+
+      const { data: squadreSalvate } = await db.from('squadre').insert(coppieProvvisorie.map(c => ({
+        torneo_id: nuovoTorneo.id, nome_squadra: c.nome_squadra,
+        portiere_id: c.portiere.id, attaccante_id: c.attaccante.id,
+        girone: c.girone, livello_totale: c.livello_totale
+      }))).select();
+
+      const gironiUnici = [...new Set(squadreSalvate.map(s => s.girone))];
+      let partiteDaCreare = [], ordine = 1;
+      gironiUnici.forEach(g => {
+        const sqGirone = squadreSalvate.filter(s => s.girone === g);
+        for (let i = 0; i < sqGirone.length; i++) {
+          for (let j = i + 1; j < sqGirone.length; j++) {
+            partiteDaCreare.push({
+              torneo_id: nuovoTorneo.id, ordine_generazione: ordine++, fase: 'girone', girone: g,
+              squadra_casa_id: sqGirone[i].id, squadra_ospite_id: sqGirone[j].id, stato_partita: 'in_coda'
+            });
+          }
+        }
+      });
+
+      partiteDaCreare.sort(() => Math.random() - 0.5);
+      await db.from('partite').insert(partiteDaCreare);
+      await assegnaProssimePartiteAiBiliardini(nuovoTorneo.id, num_biliardini);
+
+      document.getElementById('box-anteprima-coppie').classList.add('hidden');
+      await caricaTorneiCircolo(nuovoTorneo.id);
+      mostraSezione('live');
+    }
+
+    async function assegnaProssimePartiteAiBiliardini(torneoId, numBiliardini) {
+      const { data: tuttePartite } = await db.from('partite').select('*').eq('torneo_id', torneoId).order('ordine_generazione');
+      const { data: squadre } = await db.from('squadre').select('*').eq('torneo_id', torneoId);
+      const mappaSquadre = Object.fromEntries(squadre.map(s => [s.id, s]));
+
+      const inCorso = tuttePartite.filter(p => p.stato_partita === 'in_corso');
+      const concluse = tuttePartite.filter(p => p.stato_partita === 'conclusa').sort((a, b) => new Date(b.conclusa_il) - new Date(a.conclusa_il));
+      let inCoda = tuttePartite.filter(p => p.stato_partita === 'in_coda');
+
+      const tavoliOccupati = new Set(inCorso.map(p => p.biliardino_assegnato));
+      let tavoliLiberi = [];
+      for (let t = 1; t <= numBiliardini; t++) if (!tavoliOccupati.has(t)) tavoliLiberi.push(t);
+      if (tavoliLiberi.length === 0 || inCoda.length === 0) return;
+
+      let giocatoriImpegnati = new Set();
+      inCorso.forEach(p => {
+        const sc = mappaSquadre[p.squadra_casa_id], so = mappaSquadre[p.squadra_ospite_id];
+        [sc.portiere_id, sc.attaccante_id, so.portiere_id, so.attaccante_id].forEach(id => giocatoriImpegnati.add(id));
+      });
+
+      let squadreAppenaGiocate = new Set();
+      if (concluse.length > 0) {
+        squadreAppenaGiocate.add(concluse.squadra_casa_id);
+        squadreAppenaGiocate.add(concluse.squadra_ospite_id);
+      }
+
+      for (const tavolo of tavoliLiberi) {
+        let candidata = inCoda.find(p => {
+          const sc = mappaSquadre[p.squadra_casa_id], so = mappaSquadre[p.squadra_ospite_id];
+          const liberi = ![sc.portiere_id, sc.attaccante_id, so.portiere_id, so.attaccante_id].some(id => giocatoriImpegnati.has(id));
+          const riposate = !squadreAppenaGiocate.has(p.squadra_casa_id) && !squadreAppenaGiocate.has(p.squadra_ospite_id);
+          return liberi && riposate;
+        });
+
+        if (!candidata) {
+          candidata = inCoda.find(p => {
+            const sc = mappaSquadre[p.squadra_casa_id], so = mappaSquadre[p.squadra_ospite_id];
+            return ![sc.portiere_id, sc.attaccante_id, so.portiere_id, so.attaccante_id].some(id => giocatoriImpegnati.has(id));
+          });
+        }
+
+        if (candidata) {
+          await db.from('partite').update({ stato_partita: 'in_corso', biliardino_assegnato: tavolo }).eq('id', candidata.id);
+          inCoda = inCoda.filter(p => p.id !== candidata.id);
+          const sc = mappaSquadre[candidata.squadra_casa_id], so = mappaSquadre[candidata.squadra_ospite_id];
+          [sc.portiere_id, sc.attaccante_id, so.portiere_id, so.attaccante_id].forEach(id => giocatoriImpegnati.add(id));
+        }
+      }
+    }
+    async function caricaTorneiCircolo(selezionaId = null) {
+      if (!circoloAttivo) return;
+      const { data } = await db.from('tornei').select('*').eq('circolo_id', circoloAttivo.id).order('creato_il', { ascending: false });
+      const sel = document.getElementById('select-torneo-attivo');
+      if (!data || data.length === 0) {
+        sel.innerHTML = '<option value="">Nessun torneo presente</option>';
+        document.getElementById('grid-biliardini').innerHTML = '<p class="text-sm text-slate-500">Crea il primo torneo dalla scheda "Nuovo Torneo & Sorteggio".</p>';
+        document.getElementById('box-classifiche').innerHTML = '';
+        document.getElementById('lista-partite').innerHTML = '';
+        return;
+      }
+      sel.innerHTML = data.map(t => `<option value="${t.id}">${t.nome} (${t.data_torneo})</option>`).join('');
+      const targetId = selezionaId || data.id;
+      sel.value = targetId;
+      await caricaDettagliTorneo(targetId);
+    }
+
+    async function caricaDettagliTorneo(torneoId) {
+      if (!torneoId) return;
+      const { data: t } = await db.from('tornei').select('*').eq('id', torneoId).single();
+      const { data: sq } = await db.from('squadre').select('*').eq('torneo_id', torneoId);
+      const { data: pt } = await db.from('partite').select('*').eq('torneo_id', torneoId).order('ordine_generazione');
+
+      torneoCorrente = t; squadreTorneo = sq || []; partiteTorneo = pt || [];
+
+      document.getElementById('info-regole-torneo').innerHTML = `
+        <span class="bg-slate-100 px-2.5 py-1 rounded-lg">🎯 Target: ${t.target_gol} gol</span>
+        <span class="bg-slate-100 px-2.5 py-1 rounded-lg">⚖️ ${t.regola_punti === 'secca' ? 'Partita Secca' : 'Spareggio sul pari'}</span>
+        <span class="bg-slate-100 px-2.5 py-1 rounded-lg">🏓 ${t.num_biliardini} Biliardini</span>
+      `;
+
+      const gironiFiniti = partiteTorneo.filter(p => p.fase === 'girone').every(p => p.stato_partita === 'conclusa');
+      const finaliGiaCreate = partiteTorneo.some(p => p.fase !== 'girone');
+      const btnFinali = document.getElementById('btn-genera-finali');
+      if (profiloUtente && t.formula === 'gironi' && gironiFiniti && !finaliGiaCreate) {
+        btnFinali.classList.remove('hidden');
+      } else {
+        btnFinali.classList.add('hidden');
+      }
+
+      renderBiliardiniLive();
+      renderClassifiche();
+      renderCalendarioPartite();
+    }
+
+    function renderBiliardiniLive() {
+      const box = document.getElementById('grid-biliardini');
+      const mappaSq = Object.fromEntries(squadreTorneo.map(s => [s.id, s]));
+      const inCorso = partiteTorneo.filter(p => p.stato_partita === 'in_corso').sort((a, b) => a.biliardino_assegnato - b.biliardino_assegnato);
+      const isAdmin = !!profiloUtente;
+
+      if (inCorso.length === 0) {
+        box.innerHTML = '<div class="col-span-2 bg-white p-4 rounded-xl text-sm text-slate-500 border">Nessuna partita attualmente in corso sui biliardini.</div>';
+        return;
+      }
+
+      box.innerHTML = inCorso.map(p => {
+        const casa = mappaSq[p.squadra_casa_id], ospite = mappaSq[p.squadra_ospite_id];
+        return `
+          <div class="bg-white rounded-2xl shadow-md overflow-hidden border-2 border-campo">
+            <div class="bg-campo text-white px-4 py-1.5 text-xs font-black uppercase flex justify-between">
+              <span>🏓 Biliardino ${p.biliardino_assegnato}</span>
+              <span>${p.fase === 'girone' ? 'Girone ' + p.girone : p.fase.toUpperCase()}</span>
+            </div>
+            <div class="p-4 flex items-center justify-between gap-2">
+              <div class="flex-1 text-center p-2 rounded-xl text-white bg-casa font-black text-sm">${casa.nome_squadra}</div>
+              <span class="font-black text-slate-400 text-xs">VS</span>
+              <div class="flex-1 text-center p-2 rounded-xl text-white bg-ospite font-black text-sm">${ospite.nome_squadra}</div>
+            </div>
+            ${isAdmin ? `
+              <div class="bg-slate-50 px-4 py-3 border-t flex items-center justify-center gap-2">
+                <input id="gc-${p.id}" type="number" min="0" max="20" placeholder="Rosso" class="w-20 border rounded-lg px-2 py-1 text-center font-black" />
+                <span class="font-bold">-</span>
+                <input id="go-${p.id}" type="number" min="0" max="20" placeholder="Blu" class="w-20 border rounded-lg px-2 py-1 text-center font-black" />
+                <button onclick="registraRisultato('${p.id}')" class="bg-slate-900 hover:bg-black text-white text-xs font-black px-3 py-2 rounded-lg">Salva & Chiama</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function registraRisultato(partitaId) {
+      const gc = parseInt(document.getElementById(`gc-${partitaId}`).value);
+      const go = parseInt(document.getElementById(`go-${partitaId}`).value);
+      if (isNaN(gc) || isNaN(go) || gc === go) return alert('Inserisci un risultato valido (non è ammesso il pareggio).');
+
+      const T = torneoCorrente.target_gol, regola = torneoCorrente.regola_punti;
+      const maxG = Math.max(gc, go), minG = Math.min(gc, go);
+      let puntiVincitore = 3, puntiPerdente = 0;
+
+      if (regola === 'secca') {
+        if (maxG !== T) return alert(`In Partita Secca il vincitore deve avere ${T} gol.`);
+        if (minG === T - 1) { puntiVincitore = 2; puntiPerdente = 1; }
+      } else {
+        if (minG < T - 1) {
+          if (maxG !== T) return alert(`Senza arrivare a ${T-1}-${T-1}, si vince a ${T} gol.`);
+        } else {
+          if (maxG !== T + 1 || (minG !== T - 1 && minG !== T)) {
+            return alert(`Dopo ${T-1}-${T-1}, si chiude a ${T+1}-${T-1} (3pt/0pt) o ${T+1}-${T} (2pt/1pt).`);
+          }
+          if (minG === T) { puntiVincitore = 2; puntiPerdente = 1; }
+        }
+      }
+
+      await db.from('partite').update({
+        gol_casa: gc, gol_ospite: go,
+        punti_casa: gc > go ? puntiVincitore : puntiPerdente,
+        punti_ospite: go > gc ? puntiVincitore : puntiPerdente,
+        stato_partita: 'conclusa', biliardino_assegnato: null,
+        conclusa_il: new Date().toISOString()
+      }).eq('id', partitaId);
+
+      await assegnaProssimePartiteAiBiliardini(torneoCorrente.id, torneoCorrente.num_biliardini);
+      await caricaDettagliTorneo(torneoCorrente.id);
+    }
+    function calcolaClassificaGirone(g) {
+      const sqGirone = squadreTorneo.filter(s => s.girone === g);
+      return sqGirone.map(s => {
+        let pt = 0, pg = 0, gf = 0, gs = 0;
+        partiteTorneo.filter(p => p.stato_partita === 'conclusa' && p.fase === 'girone').forEach(p => {
+          if (p.squadra_casa_id === s.id) { pt += p.punti_casa; pg++; gf += p.gol_casa; gs += p.gol_ospite; }
+          if (p.squadra_ospite_id === s.id) { pt += p.punti_ospite; pg++; gf += p.gol_ospite; gs += p.gol_casa; }
+        });
+        return { ...s, pt, pg, gf, gs, dr: gf - gs };
+      }).sort((a, b) => b.pt - a.pt || b.dr - a.dr || b.gf - a.gf);
+    }
+
+    function renderClassifiche() {
+      const box = document.getElementById('box-classifiche');
+      const gironi = [...new Set(squadreTorneo.map(s => s.girone))].sort();
+
+      box.innerHTML = gironi.map(g => {
+        const stats = calcolaClassificaGirone(g);
+        return `
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="bg-slate-800 text-white px-4 py-2 text-xs font-black uppercase">Girone ${g}</div>
+            <table class="w-full text-xs text-left">
+              <thead>
+                <tr class="border-b text-slate-400">
+                  <th class="py-2 px-3">Squadra</th>
+                  <th class="py-2 px-2 text-center">PG</th>
+                  <th class="py-2 px-2 text-center">DR</th>
+                  <th class="py-2 px-3 text-right">PT</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                ${stats.map((st, idx) => `
+                  <tr class="${idx < (torneoCorrente.qualificati_per_girone || 2) ? 'bg-green-50/60' : ''}">
+                    <td class="py-2 px-3 font-bold">${idx + 1}. ${st.nome_squadra}</td>
+                    <td class="py-2 px-2 text-center">${st.pg}</td>
+                    <td class="py-2 px-2 text-center">${st.dr > 0 ? '+' + st.dr : st.dr}</td>
+                    <td class="py-2 px-3 text-right font-black text-sm text-campo">${st.pt}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function generaFaseFinale() {
+      const classA = calcolaClassificaGirone('A');
+      const classB = calcolaClassificaGirone('B');
+      if (classA.length < 2 || classB.length < 2) return alert('Servono almeno 2 squadre per girone.');
+
+      const qual = torneoCorrente.qualificati_per_girone;
+      let incroci = [];
+
+      if (qual === 99) {
+        const len = Math.min(classA.length, classB.length);
+        for (let i = 0; i < len; i++) {
+          incroci.push({
+            torneo_id: torneoCorrente.id, ordine_generazione: 100 + i,
+            fase: len === 2 ? 'semifinale' : 'eliminazione', girone: 'FINALE',
+            squadra_casa_id: classA[i].id, squadra_ospite_id: classB[len - 1 - i].id, stato_partita: 'in_coda'
+          });
+        }
+      } else {
+        incroci = [
+          { torneo_id: torneoCorrente.id, ordine_generazione: 101, fase: 'semifinale', girone: 'FINALE', squadra_casa_id: classA.id, squadra_ospite_id: classB.id, stato_partita: 'in_coda' },
+          { torneo_id: torneoCorrente.id, ordine_generazione: 102, fase: 'semifinale', girone: 'FINALE', squadra_casa_id: classB.id, squadra_ospite_id: classA.id, stato_partita: 'in_coda' }
+        ];
+      }
+
+      await db.from('partite').insert(incroci);
+      await assegnaProssimePartiteAiBiliardini(torneoCorrente.id, torneoCorrente.num_biliardini);
+      await caricaDettagliTorneo(torneoCorrente.id);
+    }
+
+    function renderCalendarioPartite() {
+      const box = document.getElementById('lista-partite');
+      const mappaSq = Object.fromEntries(squadreTorneo.map(s => [s.id, s]));
+
+      box.innerHTML = partiteTorneo.map(p => {
+        const casa = mappaSq[p.squadra_casa_id], ospite = mappaSq[p.squadra_ospite_id];
+        const badge = p.stato_partita === 'conclusa'
+          ? `<span class="font-black text-sm bg-slate-100 px-2.5 py-1 rounded-lg">${p.gol_casa} - ${p.gol_ospite}</span>`
+          : p.stato_partita === 'in_corso'
+            ? `<span class="text-xs font-black bg-green-100 text-green-800 px-2.5 py-1 rounded-full">🏓 Tavolo ${p.biliardino_assegnato}</span>`
+            : `<span class="text-xs text-slate-400 font-bold">In coda</span>`;
+
+        return `
+          <div class="bg-white p-3 rounded-xl shadow-sm border flex items-center justify-between gap-2 text-xs sm:text-sm">
+            <div class="flex-1 flex items-center gap-2">
+              <span class="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">${p.fase === 'girone' ? 'G.' + p.girone : p.fase}</span>
+              <span class="font-bold text-casa">${casa.nome_squadra}</span>
+              <span class="text-slate-400">vs</span>
+              <span class="font-bold text-ospite">${ospite.nome_squadra}</span>
+            </div>
+            <div>${badge}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function mostraSezione(sec) {
+      ['live', 'admin-torneo', 'admin-giocatori', 'super-admin'].forEach(s => {
+        document.getElementById(`sec-${s}`).classList.add('hidden');
+        const tab = document.getElementById(`tab-${s}`);
+        if (tab) { tab.classList.remove('bg-campo', 'text-white'); tab.classList.add('text-slate-600'); }
+      });
+      document.getElementById(`sec-${sec}`).classList.remove('hidden');
+      const activeTab = document.getElementById(`tab-${sec}`);
+      if (activeTab) { activeTab.classList.add('bg-campo', 'text-white'); activeTab.classList.remove('text-slate-600'); }
+    }
+
+    function apriModalLogin() { document.getElementById('modal-login').classList.remove('hidden'); }
+    function chiudiModalLogin() { document.getElementById('modal-login').classList.add('hidden'); }
+
+    async function eseguiLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-pass').value;
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) return alert('Credenziali non valide: ' + error.message);
+      chiudiModalLogin();
+      await verificaSessione();
+      await caricaCircoli();
+    }
+
+    async function logout() {
+      await db.auth.signOut();
+      location.reload();
+    }
+  </script>
+</body>
+</html>
