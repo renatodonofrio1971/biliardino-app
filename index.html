@@ -324,7 +324,6 @@
       <div id="prof-lista-tornei" class="overflow-y-auto space-y-2 flex-1 pr-1 text-sm"></div>
     </div>
   </div>
-
   <div id="modal-login" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
       <h3 class="text-lg font-black mb-1">Accesso Gestione</h3>
@@ -334,15 +333,14 @@
         <input id="login-pass" type="password" placeholder="Password" class="w-full border rounded-lg px-3 py-2" />
         <button onclick="(async () => {
           try {
-            if (!window.supabase) return alert('Libreria Supabase non caricata! Controlla riga 7.');
             const client = window.supabase.createClient('https://' + 'qgpqozwlzwzsczylnvcu.supabase.co', 'sb_publishable_Rtsf_uukI7jwtkBrJ5pbGw_cOPZortf');
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-pass').value;
-            const { data, error } = await client.auth.signInWithPassword({ email, password });
-            if (error) return alert('Errore Supabase: ' + error.message);
-            alert('Accesso riuscito! Ricarico...');
-            location.reload();
-          } catch (e) { alert('Errore tecnico: ' + e.message); }
+            if (!email || !password) return alert('Inserisci email e password.');
+            const { error } = await client.auth.signInWithPassword({ email, password });
+            if (error) return alert('Credenziali errate: verifica email e password.');
+            window.location.href = window.location.pathname;
+          } catch (e) { alert('Errore di connessione: ' + e.message); }
         })()" class="w-full bg-campo text-white font-black py-2.5 rounded-xl">Accedi</button>
         <button onclick="chiudiModalLogin()" class="w-full text-slate-500 text-xs py-1">Annulla</button>
       </div>
