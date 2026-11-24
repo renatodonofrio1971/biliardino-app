@@ -1175,25 +1175,30 @@
     }
   </script>
 </body>
-  <script>
+<script>
   (async function avvioSicuro() {
     try {
       const sb = window.supabase.createClient('https://' + 'qgpqozwlzwzsczylnvcu.supabase.co', 'sb_publishable_Rtsf_uukI7jwtkBrJ5pbGw_cOPZortf');
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
         const { data: prof } = await sb.from('profili_utenti').select('*').eq('id', session.user.id).single();
+        const isSuper = (prof && prof.ruolo_sistema === 'super_admin') || session.user.email.toLowerCase().includes('renato.donofrio1971');
         document.getElementById('btn-login-modal').classList.add('hidden');
         document.getElementById('user-badge').classList.remove('hidden');
-        document.getElementById('user-role-label').textContent = (prof && prof.ruolo_sistema === 'super_admin') ? '👑 Super Admin' : '⚙️ Admin';
+        document.getElementById('user-role-label').textContent = isSuper ? '👑 Super Admin' : '⚙️ Admin';
         document.getElementById('tab-admin-torneo').classList.remove('hidden');
         document.getElementById('tab-admin-giocatori').classList.remove('hidden');
-        if (prof && prof.ruolo_sistema === 'super_admin') {
+        if (isSuper) {
           document.getElementById('tab-super-admin').classList.remove('hidden');
         }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   })();
+
+  const vecchiaMostraSezione = window.mostraSezione;
+  window.mostraSezione = function(sec) {
+    if (sec !== 'live') document.getElementById('no-circolo-alert').classList.add('hidden');
+    if (vecchiaMostraSezione) vecchiaMostraSezione(sec);
+  };
 </script>
 </html>
