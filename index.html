@@ -4,17 +4,48 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calcio Balilla Pro</title>
-  <link href="https://cloudflare.com" rel="stylesheet">
   <script src="https://unpkg.com"></script>
   <style>
     :root { --colore-casa: #CC0605; --colore-ospite: #154889; --colore-campo: #2D7138; }
-    .bg-casa { background-color: var(--colore-casa); }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: #f1f5f9; color: #1e293b; }
+    .hidden { display: none !important; }
+    .bg-casa { background-color: var(--colore-casa); color: #fff; }
     .text-casa { color: var(--colore-casa); }
-    .bg-ospite { background-color: var(--colore-ospite); }
+    .bg-ospite { background-color: var(--colore-ospite); color: #fff; }
     .text-ospite { color: var(--colore-ospite); }
-    .bg-campo { background-color: var(--colore-campo); }
+    .bg-campo { background-color: var(--colore-campo); color: #fff; }
     .text-campo { color: var(--colore-campo); }
     .border-campo { border-color: var(--colore-campo); }
+    header { background-color: var(--colore-campo); color: #fff; padding: 14px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-bottom: 4px solid rgba(255,255,255,0.25); }
+    header > div, nav > div, main { max-width: 1100px; margin: 0 auto; }
+    header > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+    header h1 { margin: 0; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    header p { margin: 0; font-size: 0.75rem; opacity: 0.85; }
+    #header-logo { height: 44px; width: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; background: #fff; }
+    #header-default-icon { height: 44px; width: 44px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 2px solid #fff; }
+    nav { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 8px 20px; position: sticky; top: 0; z-index: 30; }
+    nav > div { display: flex; gap: 8px; overflow-x: auto; }
+    .nav-btn { padding: 8px 14px; border-radius: 10px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; background: transparent; color: #475569; }
+    .nav-btn.bg-campo { background-color: var(--colore-campo); color: #fff; }
+    main { padding: 20px; }
+    .bg-white { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; border: 1px solid #e2e8f0; }
+    button { cursor: pointer; border-radius: 10px; font-weight: 700; padding: 8px 14px; border: 1px solid #cbd5e1; background: #fff; color: #1e293b; transition: 0.15s; }
+    button:hover { opacity: 0.9; }
+    button.bg-campo { background-color: var(--colore-campo); color: #fff; border: none; }
+    button.bg-casa { background-color: var(--colore-casa); color: #fff; border: none; }
+    button.bg-slate-800, button.bg-slate-900 { background: #1e293b; color: #fff; border: none; }
+    button.bg-amber-500 { background: #f59e0b; color: #fff; border: none; }
+    button.bg-red-600 { background: #dc2626; color: #fff; border: none; }
+    input, select { padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem; background: #fff; color: #1e293b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 0.88rem; }
+    th { color: #64748b; font-size: 0.75rem; text-transform: uppercase; }
+    .grid { display: grid; gap: 14px; }
+    @media (min-width: 768px) { .md\:grid-cols-2, .lg\:grid-cols-12, .sm\:grid-cols-3, .sm\:grid-cols-4 { grid-template-columns: repeat(2, 1fr); } }
+    .fixed { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    .fixed > div { background: #fff; border-radius: 16px; padding: 24px; max-width: 440px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
+    .flex { display: flex; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; }
   </style>
 </head>
 
