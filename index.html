@@ -154,10 +154,29 @@
 
         <hr class="my-6" />
 
+                <!-- AGGIUNTA RAPIDA GIOCATORE AL VOLO -->
+        <div class="bg-slate-50 p-3 rounded-xl border mb-4">
+          <p class="text-xs font-black uppercase text-slate-500 mb-2">➕ Nuovo giocatore dell'ultimo minuto? Aggiungilo subito al database:</p>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+            <input id="fast-g-nome" type="text" placeholder="Nome giocatore" class="border rounded-lg px-2.5 py-2 bg-white" />
+            <select id="fast-g-ruolo" class="border rounded-lg px-2.5 py-2 bg-white">
+              <option value="Portiere">Portiere</option>
+              <option value="Attaccante">Attaccante</option>
+              <option value="Indifferente">Indifferente</option>
+            </select>
+            <select id="fast-g-livello" class="border rounded-lg px-2.5 py-2 bg-white">
+              <option value="1">Livello: Basso (1)</option>
+              <option value="2" selected>Livello: Medio (2)</option>
+              <option value="3">Livello: Alto (3)</option>
+            </select>
+            <button onclick="aggiungiGiocatoreAlVolo()" class="bg-slate-800 hover:bg-black text-white font-bold rounded-lg px-3 py-2">+ Aggiungi & Seleziona</button>
+          </div>
+        </div>
+
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
             <h3 class="font-black text-base">Seleziona Giocatori Presenti (<span id="count-selezionati" class="text-campo">0</span> selezionati)</h3>
-            <p class="text-xs text-slate-500">Deve essere un numero pari.</p>
+            <p class="text-xs text-slate-500">Puoi modificare ruolo e livello direttamente qui prima del sorteggio.</p>
           </div>
           <button onclick="sorteggiaEApriAnteprima()" class="bg-campo hover:opacity-90 text-white font-black px-5 py-2.5 rounded-xl shadow">
             🎲 Sorteggia Coppie Bilanciate
@@ -257,6 +276,23 @@
       </div>
     </section>
   </main>
+
+  <!-- MODAL PROFILO GIOCATORE (Storico Tornei & Posizioni) -->
+  <div id="modal-profilo-giocatore" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 max-h-[85vh] flex flex-col">
+      <div class="flex items-start justify-between border-b pb-3 mb-4">
+        <div>
+          <span class="text-xs font-bold uppercase text-slate-400">Scheda Giocatore</span>
+          <h3 id="prof-nome" class="text-2xl font-black text-slate-800"></h3>
+          <p id="prof-dettagli" class="text-xs font-bold text-campo mt-0.5"></p>
+        </div>
+        <button onclick="chiudiProfiloGiocatore()" class="text-slate-400 hover:text-slate-800 font-black text-xl">✕</button>
+      </div>
+      <div id="prof-statistiche" class="grid grid-cols-3 gap-2 text-center mb-4"></div>
+      <h4 class="text-xs font-black uppercase text-slate-500 mb-2">Storico Tornei Disputati</h4>
+      <div id="prof-lista-tornei" class="overflow-y-auto space-y-2 flex-1 pr-1 text-sm"></div>
+    </div>
+  </div>
 
   <div id="modal-login" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
@@ -905,6 +941,197 @@
     async function logout() {
       await db.auth.signOut();
       location.reload();
+    }
+
+        // AGGIUNTA RAPIDA GIOCATORE AL VOLO DAL TORNEO
+    async function aggiungiGiocatoreAlVolo() {
+      if (!circoloAttivo) return alert('Seleziona un circolo');
+      const nome = document.getElementById('fast-g-nome').value.trim();
+      const ruolo = document.getElementById('fast-g-ruolo').value;
+      const livello = parseInt(document.getElementById('fast-g-livello').value);
+      if (!nome) return alert('Inserisci il nome del giocatore');
+
+      const selezionatiPrima = new Set(Array.from(document.querySelectorAll('.chk-giocatore:checked')).map(el => el.value));
+      const { data, error } = await db.from('giocatori').insert([{ circolo_id: circoloAttivo.id, nome, ruolo, livello }]).select().single();
+      if (error) return alert('Errore: ' + error.message);
+
+      document.getElementById('fast-g-nome').value = '';
+      selezionatiPrima.add(data.id);
+      await caricaGiocatori();
+
+      document.querySelectorAll('.chk-giocatore').forEach(chk => {
+        if (selezionatiPrima.has(chk.value)) chk.checked = true;
+      });
+      aggiornaConteggioSelezionati();
+    }
+
+    // LISTA SELEZIONE GIOCATORI CON MODIFICA RUOLO/LIVELLO AL VOLO
+    renderSelezioneGiocatoriTorneo = function() {
+      const selezionatiAttuali = new Set(Array.from(document.querySelectorAll('.chk-giocatore:checked')).map(el => el.value));
+      document.getElementById('lista-selezione-giocatori').innerHTML = giocatoriCircolo.map(g => `
+        <div class="flex items-center justify-between p-2.5 border rounded-xl bg-slate-50 hover:bg-white gap-2">
+          <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+            <input type="checkbox" value="${g.id}" ${selezionatiAttuali.has(g.id) ? 'checked' : ''} onchange="aggiornaConteggioSelezionati()" class="chk-giocatore w-4 h-4 accent-green-700 shrink-0" />
+            <span class="font-bold text-sm truncate">${g.nome}</span>
+          </label>
+          <div class="flex items-center gap-1 shrink-0">
+            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'ruolo', this.value)" class="border rounded px-1.5 py-1 text-xs bg-white font-semibold">
+              <option value="Portiere" ${g.ruolo==='Portiere'?'selected':''}>🧤 Port.</option>
+              <option value="Attaccante" ${g.ruolo==='Attaccante'?'selected':''}>⚡ Att.</option>
+              <option value="Indifferente" ${g.ruolo==='Indifferente'?'selected':''}>🔄 Ind.</option>
+            </select>
+            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'livello', this.value)" class="border rounded px-1.5 py-1 text-xs bg-white font-semibold">
+              <option value="1" ${g.livello===1?'selected':''}>Lv.1</option>
+              <option value="2" ${g.livello===2?'selected':''}>Lv.2</option>
+              <option value="3" ${g.livello===3?'selected':''}>Lv.3</option>
+            </select>
+          </div>
+        </div>
+      `).join('');
+      aggiornaConteggioSelezionati();
+    };
+
+    // RENDE CLICCABILI I NOMI GIOCATORI IN ANAGRAFICA PER APRIRE IL PROFILO STORICO
+    const vecchiaRenderTabella = renderTabellaGiocatori;
+    renderTabellaGiocatori = function() {
+      vecchiaRenderTabella();
+      document.querySelectorAll('#tabella-giocatori tr').forEach((tr, idx) => {
+        const g = giocatoriCircolo[idx];
+        if (g && tr.children[0]) {
+          tr.children[0].innerHTML = `<button onclick="apriProfiloGiocatore('${g.id}')" class="text-left font-black text-ospite hover:underline flex items-center gap-1.5">${g.nome} <span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">📊 Storico</span></button>`;
+        }
+      });
+    };
+    // GRADUATORIA FINALE DEL TORNEO (Salvataggio & Visualizzazione)
+    const vecchiaRenderClassifiche = renderClassifiche;
+    renderClassifiche = function() {
+      vecchiaRenderClassifiche();
+      const box = document.getElementById('box-classifiche');
+      const isAdmin = !!profiloUtente;
+      const tutteConcluse = partiteTorneo.length > 0 && partiteTorneo.every(p => p.stato_partita === 'conclusa');
+      const haPosizioniSalvate = squadreTorneo.some(s => s.posizione_finale !== null);
+
+      let htmlGraduatoria = '';
+      if (haPosizioniSalvate) {
+        const ordinate = [...squadreTorneo].sort((a, b) => (a.posizione_finale || 99) - (b.posizione_finale || 99));
+        htmlGraduatoria = `
+          <div class="bg-white rounded-2xl shadow-md overflow-hidden border-2 border-amber-400">
+            <div class="bg-amber-500 text-white px-4 py-2 text-xs font-black uppercase flex justify-between items-center">
+              <span>🏆 Graduatoria Finale Ufficiale</span>
+            </div>
+            <div class="divide-y">
+              ${ordinate.map(s => {
+                const medaglia = s.posizione_finale === 1 ? '🥇' : s.posizione_finale === 2 ? '🥈' : s.posizione_finale === 3 ? '🥉' : `${s.posizione_finale}°`;
+                return `
+                  <div class="px-4 py-2.5 flex items-center justify-between text-sm ${s.posizione_finale <= 3 ? 'bg-amber-50/50 font-black' : ''}">
+                    <span>${medaglia} ${s.nome_squadra}</span>
+                    <div class="flex gap-1 text-xs">
+                      <button onclick="apriProfiloGiocatore('${s.portiere_id}')" class="underline text-slate-500 hover:text-black">P</button>
+                      <button onclick="apriProfiloGiocatore('${s.attaccante_id}')" class="underline text-slate-500 hover:text-black">A</button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      } else if (isAdmin && tutteConcluse) {
+        htmlGraduatoria = `
+          <button onclick="chiudiESalvaGraduatoria()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black text-sm py-3 rounded-xl shadow">
+            🏁 Chiudi Torneo & Pubblica Graduatoria Finale
+          </button>
+        `;
+      }
+      box.innerHTML = htmlGraduatoria + box.innerHTML;
+    };
+
+    async function chiudiESalvaGraduatoria() {
+      let punteggi = {};
+      squadreTorneo.forEach(s => { punteggi[s.id] = { id: s.id, pt: 0, dr: 0, gf: 0, bonusFinale: 0 }; });
+
+      partiteTorneo.filter(p => p.stato_partita === 'conclusa').forEach(p => {
+        const bonus = p.fase === 'finale' ? 1000 : p.fase === 'semifinale' ? 500 : p.fase !== 'girone' ? 200 : 0;
+        if (p.gol_casa > p.gol_ospite) punteggi[p.squadra_casa_id].bonusFinale += bonus;
+        else punteggi[p.squadra_ospite_id].bonusFinale += bonus;
+
+        punteggi[p.squadra_casa_id].pt += p.punti_casa;
+        punteggi[p.squadra_casa_id].gf += p.gol_casa;
+        punteggi[p.squadra_casa_id].dr += (p.gol_casa - p.gol_ospite);
+
+        punteggi[p.squadra_ospite_id].pt += p.punti_ospite;
+        punteggi[p.squadra_ospite_id].gf += p.gol_ospite;
+        punteggi[p.squadra_ospite_id].dr += (p.gol_ospite - p.gol_casa);
+      });
+
+      const classificaFinale = Object.values(punteggi).sort((a, b) =>
+        b.bonusFinale - a.bonusFinale || b.pt - a.pt || b.dr - a.dr || b.gf - a.gf
+      );
+
+      for (let i = 0; i < classificaFinale.length; i++) {
+        await db.from('squadre').update({ posizione_finale: i + 1 }).eq('id', classificaFinale[i].id);
+      }
+      await db.from('tornei').update({ stato: 'concluso' }).eq('id', torneoCorrente.id);
+      await caricaDettagliTorneo(torneoCorrente.id);
+      alert('Graduatoria finale salvata nei profili dei giocatori!');
+    }
+
+    // SCHEDA PROFILO GIOCATORE (Storico Tornei & Posizioni)
+    async function apriProfiloGiocatore(giocatoreId) {
+      const giocatore = giocatoriCircolo.find(g => g.id === giocatoreId);
+      if (!giocatore) return;
+
+      document.getElementById('prof-nome').textContent = giocatore.nome;
+      document.getElementById('prof-dettagli').textContent = `Ruolo: ${giocatore.ruolo} · Livello: ${giocatore.livello}/3`;
+      document.getElementById('prof-lista-tornei').innerHTML = '<p class="text-slate-400 text-xs">Caricamento storico...</p>';
+      document.getElementById('modal-profilo-giocatore').classList.remove('hidden');
+
+      const { data: partecipazioni } = await db.from('squadre')
+        .select('*, tornei(nome, data_torneo, stato)')
+        .or(`portiere_id.eq.${giocatoreId},attaccante_id.eq.${giocatoreId}`);
+
+      const lista = (partecipazioni || []).filter(p => p.tornei);
+      const totTornei = lista.length;
+      const vittorie = lista.filter(p => p.posizione_finale === 1).length;
+      const podi = lista.filter(p => p.posizione_finale && p.posizione_finale <= 3).length;
+
+      document.getElementById('prof-statistiche').innerHTML = `
+        <div class="bg-slate-50 p-2.5 rounded-xl border">
+          <span class="block text-xl font-black text-slate-800">${totTornei}</span>
+          <span class="text-[11px] font-bold text-slate-500">Tornei Giocati</span>
+        </div>
+        <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+          <span class="block text-xl font-black text-amber-600">${vittorie}</span>
+          <span class="text-[11px] font-bold text-amber-700">1° Posti</span>
+        </div>
+        <div class="bg-green-50 p-2.5 rounded-xl border border-green-200">
+          <span class="block text-xl font-black text-campo">${podi}</span>
+          <span class="text-[11px] font-bold text-campo">Podi (Top 3)</span>
+        </div>
+      `;
+
+      if (lista.length === 0) {
+        document.getElementById('prof-lista-tornei').innerHTML = '<p class="text-slate-500 text-xs">Nessun torneo disputato finora.</p>';
+        return;
+      }
+
+      document.getElementById('prof-lista-tornei').innerHTML = lista.map(p => {
+        const pos = p.posizione_finale
+          ? (p.posizione_finale === 1 ? '🥇 1° Posto' : p.posizione_finale === 2 ? '🥈 2° Posto' : p.posizione_finale === 3 ? '🥉 3° Posto' : `${p.posizione_finale}° Posto`)
+          : 'In corso';
+        return `
+          <div class="p-3 rounded-xl border bg-slate-50 flex items-center justify-between">
+            <div>
+              <p class="font-black text-slate-800">${p.tornei.nome}</p>
+              <p class="text-xs text-slate-500">${p.tornei.data_torneo} · Coppia: <b>${p.nome_squadra}</b></p>
+            </div>
+            <span class="font-black text-xs px-2.5 py-1 rounded-lg bg-white border shadow-sm">${pos}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function chiudiProfiloGiocatore() {
+      document.getElementById('modal-profilo-giocatore').classList.add('hidden');
     }
   </script>
 </body>
