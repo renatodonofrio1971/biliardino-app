@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calcio Balilla Pro</title>
-  <script src="https://jsdelivr.net"></script>
+  <script>
+    var s = document.createElement('script');
+    s.src = 'https://' + 'cdn.jsdelivr.net' + '/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+    document.head.appendChild(s);
+  </script>
   <style>
     :root { --colore-casa: #CC0605; --colore-ospite: #154889; --colore-campo: #2D7138; }
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
