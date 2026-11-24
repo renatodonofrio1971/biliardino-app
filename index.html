@@ -1175,4 +1175,25 @@
     }
   </script>
 </body>
+  <script>
+  (async function avvioSicuro() {
+    try {
+      const sb = window.supabase.createClient('https://' + 'qgpqozwlzwzsczylnvcu.supabase.co', 'sb_publishable_Rtsf_uukI7jwtkBrJ5pbGw_cOPZortf');
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        const { data: prof } = await sb.from('profili_utenti').select('*').eq('id', session.user.id).single();
+        document.getElementById('btn-login-modal').classList.add('hidden');
+        document.getElementById('user-badge').classList.remove('hidden');
+        document.getElementById('user-role-label').textContent = (prof && prof.ruolo_sistema === 'super_admin') ? '👑 Super Admin' : '⚙️ Admin';
+        document.getElementById('tab-admin-torneo').classList.remove('hidden');
+        document.getElementById('tab-admin-giocatori').classList.remove('hidden');
+        if (prof && prof.ruolo_sistema === 'super_admin') {
+          document.getElementById('tab-super-admin').classList.remove('hidden');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  })();
+</script>
 </html>
