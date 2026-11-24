@@ -330,7 +330,18 @@
       <div class="space-y-3 text-sm">
         <input id="login-email" type="email" placeholder="Email" class="w-full border rounded-lg px-3 py-2" />
         <input id="login-pass" type="password" placeholder="Password" class="w-full border rounded-lg px-3 py-2" />
-        <button onclick="eseguiLogin()" class="w-full bg-campo text-white font-black py-2.5 rounded-xl">Accedi</button>
+        <button onclick="(async () => {
+          try {
+            if (!window.supabase) return alert('Libreria Supabase non caricata! Controlla riga 7.');
+            const client = window.supabase.createClient('https://' + 'qgpqozwlzwzsczylnvcu.supabase.co', 'sb_publishable_Rtsf_uukI7jwtkBrJ5pbGw_cOPZortf');
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-pass').value;
+            const { data, error } = await client.auth.signInWithPassword({ email, password });
+            if (error) return alert('Errore Supabase: ' + error.message);
+            alert('Accesso riuscito! Ricarico...');
+            location.reload();
+          } catch (e) { alert('Errore tecnico: ' + e.message); }
+        })()" class="w-full bg-campo text-white font-black py-2.5 rounded-xl">Accedi</button>
         <button onclick="chiudiModalLogin()" class="w-full text-slate-500 text-xs py-1">Annulla</button>
       </div>
     </div>
