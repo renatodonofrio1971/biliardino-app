@@ -311,6 +311,20 @@
         <button onclick="creaNuovoCircolo()" class="bg-amber-500 hover:bg-amber-600 text-white font-black text-sm px-5 py-2.5 rounded-xl">
           + Crea Circolo
         </button>
+
+        <hr class="my-6" />
+
+        <h3 class="text-lg font-black mb-1">👤 Crea Account Amministratore (Organizzatore)</h3>
+        <p class="text-xs text-slate-500 mb-3">Assegna un User ID e una Password all'organizzatore di un circolo.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm mb-4">
+          <select id="sa-admin-circolo" class="border rounded-lg px-3 py-2"></select>
+          <input id="sa-admin-userid" type="text" placeholder="User ID (es. mario_roma)" class="border rounded-lg px-3 py-2" />
+          <input id="sa-admin-pass" type="text" placeholder="Password (min. 6 caratteri)" class="border rounded-lg px-3 py-2" />
+        </div>
+        <button onclick="creaNuovoAdmin()" class="bg-slate-800 hover:bg-black text-white font-black text-sm px-5 py-2.5 rounded-xl">
+          + Crea Amministratore
+        </button>
+
         <div class="mt-6 space-y-2" id="lista-circoli-sa"></div>
       </div>
     </section>
@@ -337,16 +351,17 @@
       <h3 class="text-lg font-black mb-1">Accesso Gestione</h3>
       <p class="text-xs text-slate-500 mb-4">Riservato ad Amministratori e Super Admin</p>
       <div class="space-y-3 text-sm">
-        <input id="login-email" type="email" placeholder="Email" class="w-full border rounded-lg px-3 py-2" />
+        <input id="login-email" type="text" placeholder="User ID o Email" class="w-full border rounded-lg px-3 py-2" />
         <input id="login-pass" type="password" placeholder="Password" class="w-full border rounded-lg px-3 py-2" />
         <button onclick="(async () => {
           try {
             const client = window.supabase.createClient('https://' + 'qgpqozwlzwzsczylnvcu.supabase.co', 'sb_publishable_Rtsf_uukI7jwtkBrJ5pbGw_cOPZortf');
-            const email = document.getElementById('login-email').value.trim();
+            let userInput = document.getElementById('login-email').value.trim().toLowerCase();
             const password = document.getElementById('login-pass').value;
-            if (!email || !password) return alert('Inserisci email e password.');
-            const { error } = await client.auth.signInWithPassword({ email, password });
-            if (error) return alert('Credenziali errate: verifica email e password.');
+            if (!userInput || !password) return alert('Inserisci User ID e Password.');
+            const emailLogin = userInput.includes('@') ? userInput : userInput.replace(/[^a-z0-9._-]/g, '') + '@biliardino.local';
+            const { error } = await client.auth.signInWithPassword({ email: emailLogin, password });
+            if (error) return alert('Credenziali errate: verifica User ID e Password.');
             window.location.href = window.location.pathname;
           } catch (e) { alert('Errore di connessione: ' + e.message); }
         })()" class="w-full bg-campo text-white font-black py-2.5 rounded-xl">Accedi</button>
@@ -1255,5 +1270,46 @@
     if (sec !== 'live') document.getElementById('no-circolo-alert').classList.add('hidden');
     if (vecchiaMostraSezione) vecchiaMostraSezione(sec);
   };
+  // POPOLA MENU CIRCOLI NEL PANNELLO SUPER ADMIN & CREA NUOVO ADMIN CON USER ID
+  const vecchiaRenderSA = renderListaCircoliSA;
+  renderListaCircoliSA = function() {
+    if (vecchiaRenderSA) vecchiaRenderSA();
+    const selAdmin = document.getElementById('sa-admin-circolo');
+    if (selAdmin) {
+      selAdmin.innerHTML = '<option value="">Seleziona Circolo...</option>' +
+        circoli.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+    }
+  };
+
+  async function creaNuovoAdmin() {
+    const circoloId = document.getElementById('sa-admin-circolo').value;
+    const rawUser = document.getElementById('sa-admin-userid').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    const password = document.getElementById('sa-admin-pass').value.trim();
+
+    if (!circoloId || !rawUser || password.length < 6) {
+      return alert('Seleziona il circolo, inserisci uno User ID valido e una password di almeno 6 caratteri.');
+    }
+
+    const fakeEmail = `${rawUser}@biliardino.local`;
+    const sbTemp = window.supabase.createClient('https://' + 'qgpqozwlzwzsczylnvcu.supabase.co', 'sb_publishable_Rtsf_uukI7jwtkBrJ5pbGw_cOPZortf', {
+      auth: { persistSession: false }
+    });
+
+    const { data, error } = await sbTemp.auth.signUp({ email: fakeEmail, password });
+    if (error) return alert('Errore creazione Admin: ' + error.message);
+
+    if (data && data.user) {
+      await db.from('profili_utenti').insert([{
+        id: data.user.id,
+        email: rawUser,
+        ruolo_sistema: 'admin',
+        circolo_id: circoloId
+      }]);
+    }
+
+    document.getElementById('sa-admin-userid').value = '';
+    document.getElementById('sa-admin-pass').value = '';
+    alert(`✅ Amministratore creato!\n\nUser ID: ${rawUser}\nPassword: ${password}`);
+  }
 </script>
 </html>
