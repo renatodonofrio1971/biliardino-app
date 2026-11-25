@@ -581,6 +581,21 @@
       if (idsSelezionati.length < 4 || idsSelezionati.length % 2 !== 0) {
         return alert('Seleziona un numero PARI di giocatori (almeno 4).');
       }
+      
+      const checkGiocatori = giocatoriCircolo.filter(g => idsSelezionati.includes(g.id));
+      const totCoppie = checkGiocatori.length / 2;
+      const countP = checkGiocatori.filter(g => g.ruolo === 'Portiere').length;
+      const countA = checkGiocatori.filter(g => g.ruolo === 'Attaccante').length;
+      const countInd = checkGiocatori.filter(g => g.ruolo === 'Indifferente').length;
+
+      if (countP > totCoppie || countA > totCoppie) {
+        return alert(`⚠️ Ruoli sbilanciati per formare ${totCoppie} coppie!\n\n` +
+          `• Portieri: ${countP} (max ${totCoppie})\n` +
+          `• Attaccanti: ${countA} (max ${totCoppie})\n` +
+          `• Indifferenti: ${countInd}\n\n` +
+          `Modifica il ruolo di qualche giocatore nella lista qui sotto prima di sorteggiare.`);
+      }
+
 
       const numTorneiStorico = parseInt(document.getElementById('t-storico').value);
       let coppieVietate = new Set();
