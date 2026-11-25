@@ -150,6 +150,13 @@
               <option value="gironi">Fase a Gironi + Tabellone Finale</option>
             </select>
           </div>
+          <div id="box-andata-ritorno">
+            <label class="font-bold block mb-1">Turni Girone Unico</label>
+            <select id="t-andata-ritorno" class="w-full border rounded-lg px-3 py-2">
+              <option value="solo_andata">Solo Andata</option>
+              <option value="andata_ritorno">Andata e Ritorno (colori invertiti)</option>
+            </select>
+          </div>
           <div id="box-qualificati" class="hidden">
             <label class="font-bold block mb-1">Qualificati per Girone</label>
             <select id="t-qualificati" class="w-full border rounded-lg px-3 py-2">
@@ -157,6 +164,7 @@
               <option value="99">Passano tutte (Incroci testa-coda)</option>
             </select>
           </div>
+
           <div>
             <label class="font-bold block mb-1">Gol per Vincere (Target)</label>
             <input id="t-target" type="number" value="8" min="5" max="15" class="w-full border rounded-lg px-3 py-2" />
@@ -563,7 +571,9 @@
     }
 
     function toggleGironiOption() {
-      document.getElementById('box-qualificati').classList.toggle('hidden', document.getElementById('t-formula').value !== 'gironi');
+      const f = document.getElementById('t-formula').value;
+      document.getElementById('box-qualificati').classList.toggle('hidden', f !== 'gironi');
+      document.getElementById('box-andata-ritorno').classList.toggle('hidden', f !== 'italiana');
     }
 
     async function sorteggiaEApriAnteprima() {
@@ -666,12 +676,14 @@
       }))).select();
 
       const gironiUnici = [...new Set(squadreSalvate.map(s => s.girone))];
-      let partiteDaCreare = [], ordine = 1;
+      const andataRitorno = (formula === 'italiana' && document.getElementById('t-andata-ritorno').value === 'andata_ritorno');
+      let partiteAndata = [], ordine = 1;
+
       gironiUnici.forEach(g => {
         const sqGirone = squadreSalvate.filter(s => s.girone === g);
         for (let i = 0; i < sqGirone.length; i++) {
           for (let j = i + 1; j < sqGirone.length; j++) {
-            partiteDaCreare.push({
+            partiteAndata.push({
               torneo_id: nuovoTorneo.id, ordine_generazione: ordine++, fase: 'girone', girone: g,
               squadra_casa_id: sqGirone[i].id, squadra_ospite_id: sqGirone[j].id, stato_partita: 'in_coda'
             });
@@ -679,7 +691,22 @@
         }
       });
 
-      partiteDaCreare.sort(() => Math.random() - 0.5);
+      partiteAndata.sort(() => Math.random() - 0.5);
+      let partiteDaCreare = [...partiteAndata];
+
+      if (andataRitorno) {
+        let partiteRitorno = partiteAndata.map((p, idx) => ({
+          torneo_id: nuovoTorneo.id,
+          ordine_generazione: 100 + idx,
+          fase: 'girone',
+          girone: p.girone,
+          squadra_casa_id: p.squadra_ospite_id, // Chi era Blu diventa Rosso
+          squadra_ospite_id: p.squadra_casa_id, // Chi era Rosso diventa Blu
+          stato_partita: 'in_coda'
+        }));
+        partiteDaCreare = partiteDaCreare.concat(partiteRitorno);
+      }
+
       await db.from('partite').insert(partiteDaCreare);
       await assegnaProssimePartiteAiBiliardini(nuovoTorneo.id, num_biliardini);
 
