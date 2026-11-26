@@ -86,10 +86,11 @@
     </div>
   </header>
 
-  <nav class="bg-white shadow-sm border-b sticky top-[68px] z-30">
+    <nav class="bg-white shadow-sm border-b sticky top-[68px] z-30">
     <div class="max-w-6xl mx-auto px-4 flex overflow-x-auto gap-1 py-2 text-sm font-bold">
-      <button onclick="mostraSezione('live')" id="tab-live" class="nav-btn px-4 py-2 rounded-lg bg-campo text-white whitespace-nowrap">🏆 Torneo Live & Classifica</button>
-      <button onclick="mostraSezione('admin-torneo')" id="tab-admin-torneo" class="nav-btn hidden px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap">⚙️ Nuovo Torneo & Sorteggio</button>
+      <button onclick="mostraSezione('live')" id="tab-live" class="nav-btn px-4 py-2 rounded-lg bg-campo text-white whitespace-nowrap">🏆 Torneo Live</button>
+      <button onclick="mostraSezione('user-palmares')" id="tab-user-palmares" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap">📊 Giocatori & Palmarès</button>
+      <button onclick="mostraSezione('admin-torneo')" id="tab-admin-torneo" class="nav-btn hidden px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap">⚙️ Nuovo Torneo</button>
       <button onclick="mostraSezione('admin-giocatori')" id="tab-admin-giocatori" class="nav-btn hidden px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap">👥 Giocatori & Stile Circolo</button>
       <button onclick="mostraSezione('super-admin')" id="tab-super-admin" class="nav-btn hidden px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap">👑 Gestione Circoli (Super Admin)</button>
     </div>
@@ -134,6 +135,21 @@
         </div>
       </div>
     </section>
+        
+    <!-- SEZIONE PUBBLICA USER: ELENCO GIOCATORI & PALMARÈS -->
+    <section id="sec-user-palmares" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg font-black text-slate-800">📊 Albo d'Oro & Giocatori del Circolo</h2>
+            <p class="text-xs text-slate-500">Tocca un giocatore per vedere i tornei disputati e i piazzamenti.</p>
+          </div>
+          <input id="cerca-giocatore-user" type="text" oninput="renderListaGiocatoriPubblica()" placeholder="🔍 Cerca giocatore..." class="border rounded-lg px-3 py-2 text-sm w-full sm:w-64" />
+        </div>
+        <div id="grid-giocatori-user" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+      </div>
+    </section>
+
 
     <section id="sec-admin-torneo" class="hidden space-y-6">
       <div class="bg-white rounded-2xl shadow-sm p-6">
@@ -1323,5 +1339,55 @@
     document.getElementById('sa-admin-pass').value = '';
     alert(`✅ Amministratore creato!\n\nUser ID: ${rawUser}\nPassword: ${password}`);
   }
+
+    // PAGINA USER: AGGIORNAMENTO LIVE, ELENCO GIOCATORI PUBBLICO E PRIVACY LIVELLO
+  const vecchiaMostraSecUser = window.mostraSezione;
+  window.mostraSezione = function(sec) {
+    document.getElementById('no-circolo-alert').classList.add('hidden');
+    ['live', 'user-palmares', 'admin-torneo', 'admin-giocatori', 'super-admin'].forEach(s => {
+      const el = document.getElementById('sec-' + s);
+      if (el) el.classList.add('hidden');
+      const tab = document.getElementById('tab-' + s);
+      if (tab) tab.classList.remove('bg-campo', 'text-white');
+    });
+    const targetSec = document.getElementById('sec-' + sec);
+    if (targetSec) targetSec.classList.remove('hidden');
+    const activeTab = document.getElementById('tab-' + sec);
+    if (activeTab) activeTab.classList.add('bg-campo', 'text-white');
+    if (sec === 'user-palmares') renderListaGiocatoriPubblica();
+  };
+
+  function renderListaGiocatoriPubblica() {
+    const box = document.getElementById('grid-giocatori-user');
+    if (!box) return;
+    const filtro = (document.getElementById('cerca-giocatore-user')?.value || '').toLowerCase().trim();
+    const filtrati = giocatoriCircolo.filter(g => g.nome.toLowerCase().includes(filtro));
+
+    if (filtrati.length === 0) {
+      box.innerHTML = '<p class="text-sm text-slate-500">Nessun giocatore trovato.</p>';
+      return;
+    }
+
+    box.innerHTML = filtrati.map(g => `
+      <div onclick="apriProfiloGiocatore('${g.id}')" class="p-3.5 rounded-xl border bg-slate-50 hover:bg-white cursor-pointer flex items-center justify-between transition shadow-sm">
+        <div>
+          <p class="font-black text-base text-slate-800">${g.nome}</p>
+          <p class="text-xs text-slate-500 font-semibold">${g.ruolo === 'Portiere' ? '🧤 Portiere' : g.ruolo === 'Attaccante' ? '⚽ Attaccante' : '🔄 Indifferente'}</p>
+        </div>
+        <span class="text-xs font-black px-2.5 py-1 rounded-lg bg-white border text-campo">Storico →</span>
+      </div>
+    `).join('');
+  }
+
+  // NASCONDE IL LIVELLO TECNICO NELLA SCHEDA GIOCATORE SE CHI GUARDA È UN UTENTE NORMALE
+  const vecchiaApriProfilo = apriProfiloGiocatore;
+  apriProfiloGiocatore = async function(giocatoreId) {
+    await vecchiaApriProfilo(giocatoreId);
+    const giocatore = giocatoriCircolo.find(g => g.id === giocatoreId);
+    if (giocatore && !profiloUtente) {
+      document.getElementById('prof-dettagli').textContent = `Ruolo preferito: ${giocatore.ruolo}`;
+    }
+  };
+
 </script>
 </html>
