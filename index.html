@@ -627,23 +627,25 @@
     function renderTabellaGiocatori() {
       document.getElementById('tabella-giocatori').innerHTML = giocatoriCircolo.map(g => `
         <tr>
-          <td class="py-2.5 font-bold">${g.nome}</td>
-          <td class="py-2.5">
-            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'ruolo', this.value)" class="border rounded px-2 py-1 text-xs">
+          <td class="py-2 font-bold">
+            <button onclick="apriProfiloGiocatore('${g.id}')" style="padding:2px 0; border:none; background:transparent; text-align:left; font-weight:800; color:var(--colore-ospite); font-size:0.82rem;">${g.nome}</button>
+          </td>
+          <td class="py-2">
+            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'ruolo', this.value)" class="border rounded px-1.5 py-1 text-xs">
               <option value="Portiere" ${g.ruolo==='Portiere'?'selected':''}>Portiere</option>
               <option value="Attaccante" ${g.ruolo==='Attaccante'?'selected':''}>Attaccante</option>
-              <option value="Indifferente" ${g.ruolo==='Indifferente'?'selected':''}>Indifferente</option>
+              <option value="Indifferente" ${g.ruolo==='Indifferente'?'selected':''}>Indiff.</option>
             </select>
           </td>
-          <td class="py-2.5">
-            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'livello', this.value)" class="border rounded px-2 py-1 text-xs">
-              <option value="1" ${g.livello===1?'selected':''}>Basso (1)</option>
-              <option value="2" ${g.livello===2?'selected':''}>Medio (2)</option>
-              <option value="3" ${g.livello===3?'selected':''}>Alto (3)</option>
+          <td class="py-2">
+            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'livello', this.value)" class="border rounded px-1.5 py-1 text-xs">
+              <option value="1" ${g.livello===1?'selected':''}>Lv.1 (Basso)</option>
+              <option value="2" ${g.livello===2?'selected':''}>Lv.2 (Medio)</option>
+              <option value="3" ${g.livello===3?'selected':''}>Lv.3 (Alto)</option>
             </select>
           </td>
-          <td class="py-2.5 text-right">
-            <button onclick="eliminaGiocatore('${g.id}')" class="text-red-500 text-xs font-bold hover:underline">Elimina</button>
+          <td class="py-2 text-right">
+            <button onclick="eliminaGiocatore('${g.id}')" style="padding:4px 6px; font-size:0.72rem; color:#dc2626; border:1px solid #fecaca; background:#fef2f2;">✕</button>
           </td>
         </tr>
       `).join('');
@@ -1194,17 +1196,7 @@
       aggiornaConteggioSelezionati();
     };
 
-    // RENDE CLICCABILI I NOMI GIOCATORI IN ANAGRAFICA PER APRIRE IL PROFILO STORICO
-    const vecchiaRenderTabella = renderTabellaGiocatori;
-    renderTabellaGiocatori = function() {
-      vecchiaRenderTabella();
-      document.querySelectorAll('#tabella-giocatori tr').forEach((tr, idx) => {
-        const g = giocatoriCircolo[idx];
-        if (g && tr.children[0]) {
-          tr.children[0].innerHTML = `<button onclick="apriProfiloGiocatore('${g.id}')" class="text-left font-black text-ospite hover:underline flex items-center gap-1.5">${g.nome} <span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">📊 Storico</span></button>`;
-        }
-      });
-    };
+   
     // GRADUATORIA FINALE DEL TORNEO (Salvataggio & Visualizzazione)
     const vecchiaRenderClassifiche = renderClassifiche;
     renderClassifiche = function() {
