@@ -7,12 +7,14 @@
    <script>
     document.write('<scr' + 'ipt src="https://' + 'cdn.jsdelivr.net' + '/npm/@supabase/supabase-js@2/dist/umd/supabase.js"><\/scr' + 'ipt>');
   </script>
-  <style>
+    <style>
     :root { --colore-casa: #CC0605; --colore-ospite: #154889; --colore-campo: #2D7138; }
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-    body { margin: 0; background: #f1f5f9; color: #1e293b; display: block !important; }
+    body { margin: 0; background: #f1f5f9; color: #1e293b; display: block !important; overflow-x: hidden; }
     header, nav, main { display: block; width: 100%; }
     .hidden { display: none !important; }
+
+    /* COLORI DINAMICI */
     .bg-casa { background-color: var(--colore-casa); color: #fff; }
     .text-casa { color: var(--colore-casa); }
     .bg-ospite { background-color: var(--colore-ospite); color: #fff; }
@@ -20,35 +22,60 @@
     .bg-campo { background-color: var(--colore-campo); color: #fff; }
     .text-campo { color: var(--colore-campo); }
     .border-campo { border-color: var(--colore-campo); }
-    header { background-color: var(--colore-campo); color: #fff; padding: 14px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-bottom: 4px solid rgba(255,255,255,0.25); }
-    header > div, nav > div, main { max-width: 1100px; margin: 0 auto; }
-    header > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-    header h1 { margin: 0; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    header p { margin: 0; font-size: 0.75rem; opacity: 0.85; }
-    #header-logo { height: 44px; width: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; background: #fff; }
-    #header-default-icon { height: 44px; width: 44px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 2px solid #fff; }
-    nav { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 8px 20px; position: sticky; top: 0; z-index: 30; }
-    nav > div { display: flex; gap: 8px; overflow-x: auto; }
-    .nav-btn { padding: 8px 14px; border-radius: 10px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; background: transparent; color: #475569; }
-    .nav-btn.bg-campo { background-color: var(--colore-campo); color: #fff; }
-    main { padding: 20px; }
-    .bg-white { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; border: 1px solid #e2e8f0; }
-    button { cursor: pointer; border-radius: 10px; font-weight: 700; padding: 8px 14px; border: 1px solid #cbd5e1; background: #fff; color: #1e293b; transition: 0.15s; }
-    button:hover { opacity: 0.9; }
+
+    /* HEADER COMPATTO */
+    header { background-color: var(--colore-campo); color: #fff; padding: 12px 16px; box-shadow: 0 3px 10px rgba(0,0,0,0.12); border-bottom: 3px solid rgba(255,255,255,0.25); }
+    header > div, nav > div, main { max-width: 1050px; margin: 0 auto; }
+    header > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    header h1 { margin: 0; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1.2; }
+    header p { margin: 2px 0 0; font-size: 0.72rem; opacity: 0.85; }
+    #header-logo, #header-default-icon { height: 40px; width: 40px; border-radius: 50%; flex-shrink: 0; border: 2px solid #fff; }
+    #header-logo { object-fit: cover; background: #fff; }
+    #header-default-icon { background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
+    /* BARRA NAVIGAZIONE ORIZZONTALE A SINGOLA RIGA */
+    nav { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 8px 12px; position: sticky; top: 0; z-index: 30; }
+    nav > div { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    nav > div::-webkit-scrollbar { display: none; }
+    .nav-btn { padding: 8px 12px; border-radius: 10px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 0.8rem; cursor: pointer; background: #f8fafc; color: #475569; white-space: nowrap; flex-shrink: 0; }
+    .nav-btn.bg-campo { background-color: var(--colore-campo); color: #fff; border-color: var(--colore-campo); }
+
+    /* CONTENITORE PRINCIPALE E SCHEDE */
+    main { padding: 14px; }
+    .bg-white { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 14px; border: 1px solid #e2e8f0; width: 100%; }
+
+    /* LAYOUT TORNEO SELEZIONATO & CONDIVISIONE (NO SBORDAMENTI) */
+    #sec-live > div:first-child { display: flex; flex-direction: column; gap: 12px; }
+    #sec-live > div:first-child > div { width: 100%; }
+    #select-torneo-attivo { width: 100%; margin-top: 6px; font-weight: 800; }
+    #btn-condividi-giocatori, #btn-condividi-admin { width: 100%; text-align: center; padding: 10px 14px; font-size: 0.85rem; }
+
+    /* PULSANTI, INPUT E TABELLE */
+    button { cursor: pointer; border-radius: 10px; font-weight: 700; padding: 8px 12px; border: 1px solid #cbd5e1; background: #fff; color: #1e293b; font-size: 0.82rem; }
     button.bg-campo { background-color: var(--colore-campo); color: #fff; border: none; }
     button.bg-casa { background-color: var(--colore-casa); color: #fff; border: none; }
     button.bg-slate-800, button.bg-slate-900 { background: #1e293b; color: #fff; border: none; }
     button.bg-amber-500 { background: #f59e0b; color: #fff; border: none; }
     button.bg-red-600 { background: #dc2626; color: #fff; border: none; }
-    input, select { padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem; background: #fff; color: #1e293b; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 0.88rem; }
-    th { color: #64748b; font-size: 0.75rem; text-transform: uppercase; }
-    .grid { display: grid; gap: 14px; }
-    @media (min-width: 768px) { .md\:grid-cols-2, .lg\:grid-cols-12, .sm\:grid-cols-3, .sm\:grid-cols-4 { grid-template-columns: repeat(2, 1fr); } }
-    .fixed { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
-    .fixed > div { background: #fff; border-radius: 16px; padding: 24px; max-width: 440px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
-    .flex { display: flex; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; }
+    input, select { padding: 9px 12px; border-radius: 9px; border: 1px solid #cbd5e1; font-size: 0.88rem; background: #fff; color: #1e293b; max-width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { padding: 9px 6px; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 0.84rem; }
+    th { color: #64748b; font-size: 0.72rem; text-transform: uppercase; }
+    .grid { display: grid; gap: 12px; }
+    .flex { display: flex; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .gap-2 { gap: 6px; } .gap-3 { gap: 10px; }
+
+    /* MODALI A SCHERMO INTERO SU MOBILE */
+    .fixed { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 14px; }
+    .fixed > div { background: #fff; border-radius: 16px; padding: 20px; max-width: 440px; width: 100%; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+
+    /* ADATTAMENTO DESKTOP */
+    @media (min-width: 768px) {
+      #sec-live > div:first-child { flex-direction: row; align-items: center; justify-content: space-between; }
+      #sec-live > div:first-child > div:first-child { width: auto; min-width: 260px; }
+      #sec-live > div:first-child > div:last-child { width: auto; justify-content: flex-end; }
+      #btn-condividi-giocatori, #btn-condividi-admin { width: auto; }
+      .md\:grid-cols-2, .lg\:grid-cols-12, .sm\:grid-cols-3, .sm\:grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 
