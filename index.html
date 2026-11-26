@@ -189,6 +189,13 @@
               <option value="3">3 - Evita coppie ultimi 3 tornei</option>
             </select>
           </div>
+          <div>
+            <label class="font-bold block mb-1">Criterio Formazione Coppie</label>
+            <select id="t-bilanciamento" class="w-full border rounded-lg px-3 py-2">
+              <option value="bilanciato" selected>Equilibrate per livello (Consigliato)</option>
+              <option value="casuale">Casuale puro (Solo rispetto ruoli)</option>
+            </select>
+          </div>
         </div>
 
         <hr class="my-6" />
@@ -640,8 +647,12 @@
         while (portieri.length > numCoppie) attaccanti.push(portieri.pop());
         while (attaccanti.length > numCoppie) portieri.push(attaccanti.pop());
 
-        portieri.sort((a, b) => a.livello - b.livello || Math.random() - 0.5);
-        attaccanti.sort((a, b) => b.livello - a.livello || Math.random() - 0.5);
+        const usaBilanciamento = document.getElementById('t-bilanciamento').value === 'bilanciato';
+
+        if (usaBilanciamento) {
+          portieri.sort((a, b) => a.livello - b.livello || Math.random() - 0.5);
+          attaccanti.sort((a, b) => b.livello - a.livello || Math.random() - 0.5);
+        }
 
         let coppie = [], ripetizioni = 0, livelli = [];
         for (let i = 0; i < numCoppie; i++) {
@@ -652,7 +663,8 @@
           coppie.push({ portiere: p, attaccante: a, nome_squadra: `${p.nome} / ${a.nome}`, livello_totale: livTot, girone: 'A' });
         }
 
-        const penalita = (ripetizioni * 100) + (Math.max(...livelli) - Math.min(...livelli));
+        const scartoLivelli = usaBilanciamento ? (Math.max(...livelli) - Math.min(...livelli)) : 0;
+        const penalita = (ripetizioni * 100) + scartoLivelli;
         if (penalita < migliorPunteggio) {
           migliorPunteggio = penalita;
           migliorSet = coppie;
