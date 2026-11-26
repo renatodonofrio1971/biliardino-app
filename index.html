@@ -1287,68 +1287,7 @@
       alert('Graduatoria finale salvata nei profili dei giocatori!');
     }
 
-    // SCHEDA PROFILO GIOCATORE (Storico Tornei & Posizioni)
-    async function apriProfiloGiocatore(giocatoreId) {
-      const giocatore = giocatoriCircolo.find(g => g.id === giocatoreId);
-      if (!giocatore) return;
-
-      document.getElementById('prof-nome').textContent = giocatore.nome;
-      document.getElementById('prof-dettagli').textContent = `Ruolo: ${giocatore.ruolo} · Livello: ${giocatore.livello}/3`;
-      document.getElementById('prof-lista-tornei').innerHTML = '<p class="text-slate-400 text-xs">Caricamento storico...</p>';
-      document.getElementById('modal-profilo-giocatore').classList.remove('hidden');
-
-      const { data: partecipazioni } = await db.from('squadre')
-        .select('*, tornei(nome, data_torneo, stato)')
-        .or(`portiere_id.eq.${giocatoreId},attaccante_id.eq.${giocatoreId}`);
-
-      const lista = (partecipazioni || []).filter(p => p.tornei);
-      const totTornei = lista.length;
-      const vittorie = lista.filter(p => p.posizione_finale === 1).length;
-      const podi = lista.filter(p => p.posizione_finale && p.posizione_finale <= 3).length;
-
-      document.getElementById('prof-statistiche').innerHTML = `
-        <div class="bg-slate-50 p-2.5 rounded-xl border">
-          <span class="block text-xl font-black text-slate-800">${totTornei}</span>
-          <span class="text-[11px] font-bold text-slate-500">Tornei Giocati</span>
-        </div>
-        <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
-          <span class="block text-xl font-black text-amber-600">${vittorie}</span>
-          <span class="text-[11px] font-bold text-amber-700">1° Posti</span>
-        </div>
-        <div class="bg-green-50 p-2.5 rounded-xl border border-green-200">
-          <span class="block text-xl font-black text-campo">${podi}</span>
-          <span class="text-[11px] font-bold text-campo">Podi (Top 3)</span>
-        </div>
-      `;
-
-      if (lista.length === 0) {
-        document.getElementById('prof-lista-tornei').innerHTML = '<p class="text-slate-500 text-xs">Nessun torneo disputato finora.</p>';
-        return;
-      }
-
-      document.getElementById('prof-lista-tornei').innerHTML = lista.map(p => {
-      const ruoloInTorneo = p.portiere_id === giocatoreId ? 'Portiere' : 'Attaccante';
-      const pos = p.posizione_finale ? `${p.posizione_finale}° Posto` : 'In corso';
-      const badgeStyle = p.posizione_finale === 1
-        ? 'background:#fef3c7; color:#b45309; border:1px solid #fcd34d;'
-        : p.posizione_finale && p.posizione_finale <= 3
-        ? 'background:#dcfce7; color:#15803d; border:1px solid #86efac;'
-        : 'background:#fff; color:#334155; border:1px solid #cbd5e1;';
-      return `
-        <div style="display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
-          <div style="min-width:0;">
-            <p style="margin:0 0 3px 0; font-weight:800; font-size:0.88rem; color:#1e293b;">${p.tornei.nome}</p>
-            <p style="margin:0 0 2px 0; font-size:0.75rem; color:#64748b;">${p.tornei.data_torneo} · Ruolo: <b>${ruoloInTorneo}</b></p>
-            <p style="margin:0; font-size:0.78rem; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Coppia: <b>${p.nome_squadra}</b></p>
-          </div>
-          <span style="white-space:nowrap; padding:4px 9px; font-size:0.75rem; font-weight:800; border-radius:8px; ${badgeStyle}">${pos}</span>
-        </div>
-      `;
-    }).join('');
-
-    }
-
-    function chiudiProfiloGiocatore() {
+     function chiudiProfiloGiocatore() {
       document.getElementById('modal-profilo-giocatore').classList.add('hidden');
     }
   </script>
@@ -1546,22 +1485,26 @@
       return;
     }
 
-    document.getElementById('prof-lista-tornei').innerHTML = lista.map(p => {
-      const ruoloInTorneo = p.portiere_id === giocatoreId ? '🧤 Portiere' : '⚽ Attaccante';
-      const pos = p.posizione_finale
-        ? (p.posizione_finale === 1 ? '🥇 1° Posto' : p.posizione_finale === 2 ? '🥈 2° Posto' : p.posizione_finale === 3 ? '🥉 3° Posto' : `${p.posizione_finale}° Posto`)
-        : 'In corso';
+      document.getElementById('prof-lista-tornei').innerHTML = lista.map(p => {
+      const ruoloInTorneo = p.portiere_id === giocatoreId ? 'Portiere' : 'Attaccante';
+      const pos = p.posizione_finale ? `${p.posizione_finale}° Posto` : 'In corso';
+      const badgeStyle = p.posizione_finale === 1
+        ? 'background:#fef3c7; color:#b45309; border:1px solid #fcd34d;'
+        : p.posizione_finale && p.posizione_finale <= 3
+        ? 'background:#dcfce7; color:#15803d; border:1px solid #86efac;'
+        : 'background:#fff; color:#334155; border:1px solid #cbd5e1;';
       return `
-        <div class="p-3 rounded-xl border bg-slate-50 flex items-center justify-between gap-2">
-          <div>
-            <p class="font-black text-slate-800">${p.tornei.nome}</p>
-            <p class="text-xs text-slate-500">${p.tornei.data_torneo} · Ruolo: <b>${ruoloInTorneo}</b></p>
-            <p class="text-xs text-slate-500">Coppia: <b>${p.nome_squadra}</b></p>
+        <div style="display:flex; flex-direction:column; gap:4px; padding:11px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; width:100%;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;">
+            <span style="font-weight:800; font-size:0.9rem; color:#1e293b;">${p.tornei.nome}</span>
+            <span style="white-space:nowrap; padding:3px 8px; font-size:0.72rem; font-weight:800; border-radius:6px; flex-shrink:0; ${badgeStyle}">${pos}</span>
           </div>
-          <span class="font-black text-xs px-2.5 py-1 rounded-lg bg-white border shadow-sm shrink-0">${pos}</span>
+          <div style="font-size:0.75rem; color:#64748b;">${p.tornei.data_torneo} · Ruolo: <b style="color:#1e293b;">${ruoloInTorneo}</b></div>
+          <div style="font-size:0.8rem; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Coppia: <b style="color:#1e293b;">${p.nome_squadra}</b></div>
         </div>
       `;
     }).join('');
+
   };
 
 
