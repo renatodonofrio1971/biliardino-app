@@ -109,7 +109,16 @@
           <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Torneo Selezionato</span>
           <select id="select-torneo-attivo" onchange="caricaDettagliTorneo(this.value)" class="block mt-1 font-black text-lg text-slate-800 bg-slate-50 border rounded-lg px-3 py-1.5"></select>
         </div>
-        <div id="info-regole-torneo" class="flex flex-wrap gap-2 text-xs font-bold"></div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div id="info-regole-torneo" class="flex flex-wrap gap-2 text-xs font-bold"></div>
+          <button id="btn-condividi-giocatori" onclick="condividiLinkCircolo('giocatori')" class="hidden bg-campo text-white text-xs font-black px-3 py-2 rounded-lg shadow">
+            📲 Condividi con Giocatori
+          </button>
+          <button id="btn-condividi-admin" onclick="condividiLinkCircolo('admin')" class="hidden bg-slate-800 text-white text-xs font-black px-3 py-2 rounded-lg shadow">
+            🔑 Link per Admin
+          </button>
+        </div>
+
       </div>
 
       <div>
@@ -1357,6 +1366,55 @@
     if (sec === 'user-palmares') renderListaGiocatoriPubblica();
   };
 
+    // 1. ISOLAMENTO CIRCOLO E PULSANTI CONDIVISIONE (Admin & Super Admin)
+  const vecchiaCambiaCircolo = cambiaCircolo;
+  cambiaCircolo = async function(circoloId) {
+    await vecchiaCambiaCircolo(circoloId);
+    const isSuper = profiloUtente && (profiloUtente.ruolo_sistema === 'super_admin' || (utenteCorrente && utenteCorrente.email.toLowerCase().includes('renato.donofrio1971')));
+    const selCircolo = document.getElementById('selettore-circolo');
+
+    if (!isSuper && selCircolo) selCircolo.classList.add('hidden');
+    else if (selCircolo) selCircolo.classList.remove('hidden');
+
+    if (profiloUtente && circoloAttivo) {
+      document.getElementById('btn-condividi-giocatori')?.classList.remove('hidden');
+      if (isSuper) document.getElementById('btn-condividi-admin')?.classList.remove('hidden');
+    }
+  };
+
+  function condividiLinkCircolo(tipo) {
+    if (!circoloAttivo) return;
+    const baseUrl = window.location.origin + window.location.pathname;
+    const link = tipo === 'giocatori'
+      ? `${baseUrl}?circolo=${circoloAttivo.slug}&view=user`
+      : `${baseUrl}?circolo=${circoloAttivo.slug}`;
+    const testo = tipo === 'giocatori'
+      ? `⚽ Segui live classifiche e partite di *${circoloAttivo.nome}* qui:\n${link}`
+      : `🔑 Pannello Gestione Torneo per *${circoloAttivo.nome}*:\n${link}\n(Clicca su "Area Admin" in alto a destra e inserisci il tuo User ID e Password)`;
+
+    if (navigator.share) {
+      navigator.share({ title: circoloAttivo.nome, text: testo }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(testo);
+      alert(`✅ Messaggio copiato negli appunti! Ora puoi incollarlo su WhatsApp:\n\n${testo}`);
+    }
+  }
+
+  // 2. MODALITÀ USER PURA (?view=user: Nasconde Area Admin e Selettore Circolo + Auto-aggiornamento 20s)
+  (function attivaVistaUserDedicata() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('view') === 'user') {
+      document.getElementById('selettore-circolo')?.classList.add('hidden');
+      document.getElementById('btn-login-modal')?.classList.add('hidden');
+      setInterval(() => {
+        if (torneoCorrente && !document.getElementById('sec-live').classList.contains('hidden')) {
+          caricaDettagliTorneo(torneoCorrente.id);
+        }
+      }, 20000);
+    }
+  })();
+
+  // 3. LISTA GIOCATORI PUBBLICA (Solo Nome, senza ruolo fisso)
   function renderListaGiocatoriPubblica() {
     const box = document.getElementById('grid-giocatori-user');
     if (!box) return;
@@ -1370,24 +1428,71 @@
 
     box.innerHTML = filtrati.map(g => `
       <div onclick="apriProfiloGiocatore('${g.id}')" class="p-3.5 rounded-xl border bg-slate-50 hover:bg-white cursor-pointer flex items-center justify-between transition shadow-sm">
-        <div>
-          <p class="font-black text-base text-slate-800">${g.nome}</p>
-          <p class="text-xs text-slate-500 font-semibold">${g.ruolo === 'Portiere' ? '🧤 Portiere' : g.ruolo === 'Attaccante' ? '⚽ Attaccante' : '🔄 Indifferente'}</p>
-        </div>
-        <span class="text-xs font-black px-2.5 py-1 rounded-lg bg-white border text-campo">Storico →</span>
+        <p class="font-black text-base text-slate-800">${g.nome}</p>
+        <span class="text-xs font-black px-2.5 py-1 rounded-lg bg-white border text-campo">Statistiche →</span>
       </div>
     `).join('');
   }
 
-  // NASCONDE IL LIVELLO TECNICO NELLA SCHEDA GIOCATORE SE CHI GUARDA È UN UTENTE NORMALE
-  const vecchiaApriProfilo = apriProfiloGiocatore;
+  // 4. SCHEDA PROFILO GIOCATORE CON RUOLO ESATTO RICOPERTO IN OGNI SINGOLO TORNEO
   apriProfiloGiocatore = async function(giocatoreId) {
-    await vecchiaApriProfilo(giocatoreId);
     const giocatore = giocatoriCircolo.find(g => g.id === giocatoreId);
-    if (giocatore && !profiloUtente) {
-      document.getElementById('prof-dettagli').textContent = `Ruolo preferito: ${giocatore.ruolo}`;
+    if (!giocatore) return;
+
+    document.getElementById('prof-nome').textContent = giocatore.nome;
+    document.getElementById('prof-dettagli').textContent = profiloUtente
+      ? `Anagrafica Admin: ${giocatore.ruolo} · Livello ${giocatore.livello}/3`
+      : 'Storico partecipazioni e ruoli ricoperti';
+    document.getElementById('prof-lista-tornei').innerHTML = '<p class="text-slate-400 text-xs">Caricamento storico...</p>';
+    document.getElementById('modal-profilo-giocatore').classList.remove('hidden');
+
+    const { data: partecipazioni } = await db.from('squadre')
+      .select('*, tornei(nome, data_torneo, stato)')
+      .or(`portiere_id.eq.${giocatoreId},attaccante_id.eq.${giocatoreId}`);
+
+    const lista = (partecipazioni || []).filter(p => p.tornei);
+    const totTornei = lista.length;
+    const vittorie = lista.filter(p => p.posizione_finale === 1).length;
+    const podi = lista.filter(p => p.posizione_finale && p.posizione_finale <= 3).length;
+
+    document.getElementById('prof-statistiche').innerHTML = `
+      <div class="bg-slate-50 p-2.5 rounded-xl border">
+        <span class="block text-xl font-black text-slate-800">${totTornei}</span>
+        <span class="text-[11px] font-bold text-slate-500">Tornei Giocati</span>
+      </div>
+      <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+        <span class="block text-xl font-black text-amber-600">${vittorie}</span>
+        <span class="text-[11px] font-bold text-amber-700">1° Posti</span>
+      </div>
+      <div class="bg-green-50 p-2.5 rounded-xl border border-green-200">
+        <span class="block text-xl font-black text-campo">${podi}</span>
+        <span class="text-[11px] font-bold text-campo">Podi (Top 3)</span>
+      </div>
+    `;
+
+    if (lista.length === 0) {
+      document.getElementById('prof-lista-tornei').innerHTML = '<p class="text-slate-500 text-xs">Nessun torneo disputato finora.</p>';
+      return;
     }
+
+    document.getElementById('prof-lista-tornei').innerHTML = lista.map(p => {
+      const ruoloInTorneo = p.portiere_id === giocatoreId ? '🧤 Portiere' : '⚽ Attaccante';
+      const pos = p.posizione_finale
+        ? (p.posizione_finale === 1 ? '🥇 1° Posto' : p.posizione_finale === 2 ? '🥈 2° Posto' : p.posizione_finale === 3 ? '🥉 3° Posto' : `${p.posizione_finale}° Posto`)
+        : 'In corso';
+      return `
+        <div class="p-3 rounded-xl border bg-slate-50 flex items-center justify-between gap-2">
+          <div>
+            <p class="font-black text-slate-800">${p.tornei.nome}</p>
+            <p class="text-xs text-slate-500">${p.tornei.data_torneo} · Ruolo: <b>${ruoloInTorneo}</b></p>
+            <p class="text-xs text-slate-500">Coppia: <b>${p.nome_squadra}</b></p>
+          </div>
+          <span class="font-black text-xs px-2.5 py-1 rounded-lg bg-white border shadow-sm shrink-0">${pos}</span>
+        </div>
+      `;
+    }).join('');
   };
+
 
 </script>
 </html>
