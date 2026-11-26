@@ -89,6 +89,13 @@
     #tabella-giocatori td { padding: 8px 3px; font-size: 0.78rem; }
     #tabella-giocatori select { padding: 5px 4px; font-size: 0.72rem; max-width: 92px; }
 
+    /* FIX ALLINEAMENTO PALMARÈS E SCHEDE GIOCATORI SU SMARTPHONE */
+    #sec-user-palmares .bg-white > div:first-child { flex-direction: column; align-items: stretch; gap: 10px; }
+    #cerca-giocatore-user { width: 100%; }
+    #grid-giocatori-user > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; }
+    #grid-giocatori-user > div > p { margin: 0; font-weight: 800; font-size: 0.95rem; flex: 1; }
+    #grid-giocatori-user > div > span { flex-shrink: 0; white-space: nowrap; }
+
   </style>
 </head>
 
@@ -200,21 +207,23 @@
         </div>
       </div>
     </section>
-        
-    <!-- SEZIONE PUBBLICA USER: ELENCO GIOCATORI & PALMARÈS -->
+
+     <!-- SEZIONE PUBBLICA USER: ELENCO GIOCATORI & PALMARÈS -->
     <section id="sec-user-palmares" class="hidden space-y-4">
       <div class="bg-white rounded-2xl shadow-sm p-5">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h2 class="text-lg font-black text-slate-800">📊 Albo d'Oro & Giocatori del Circolo</h2>
-            <p class="text-xs text-slate-500">Tocca un giocatore per vedere i tornei disputati e i piazzamenti.</p>
+            <h2 class="text-lg font-black text-slate-800" style="display:flex; align-items:center; gap:8px; margin:0 0 4px 0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--colore-campo)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <span>Albo d'Oro & Giocatori</span>
+            </h2>
+            <p class="text-xs text-slate-500" style="margin:0;">Tocca un giocatore per vedere i tornei disputati e i piazzamenti.</p>
           </div>
-          <input id="cerca-giocatore-user" type="text" oninput="renderListaGiocatoriPubblica()" placeholder="🔍 Cerca giocatore..." class="border rounded-lg px-3 py-2 text-sm w-full sm:w-64" />
+          <input id="cerca-giocatore-user" type="text" oninput="renderListaGiocatoriPubblica()" placeholder="Cerca giocatore per nome..." class="border rounded-lg px-3 py-2 text-sm w-full sm:w-64" />
         </div>
         <div id="grid-giocatori-user" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
       </div>
     </section>
-
 
     <section id="sec-admin-torneo" class="hidden space-y-6">
       <div class="bg-white rounded-2xl shadow-sm p-6">
