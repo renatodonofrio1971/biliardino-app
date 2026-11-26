@@ -1444,7 +1444,7 @@
     `).join('');
   }
 
-  // 4. SCHEDA PROFILO GIOCATORE CON RUOLO ESATTO RICOPERTO IN OGNI SINGOLO TORNEO
+    // 4. SCHEDA PROFILO GIOCATORE CON RUOLO ESATTO RICOPERTO IN OGNI SINGOLO TORNEO
   apriProfiloGiocatore = async function(giocatoreId) {
     const giocatore = giocatoriCircolo.find(g => g.id === giocatoreId);
     if (!giocatore) return;
@@ -1485,14 +1485,16 @@
       return;
     }
 
-      document.getElementById('prof-lista-tornei').innerHTML = lista.map(p => {
+    document.getElementById('prof-lista-tornei').innerHTML = lista.map(p => {
       const ruoloInTorneo = p.portiere_id === giocatoreId ? 'Portiere' : 'Attaccante';
       const pos = p.posizione_finale ? `${p.posizione_finale}° Posto` : 'In corso';
       const badgeStyle = p.posizione_finale === 1
-        ? 'background:#fef3c7; color:#b45309; border:1px solid #fcd34d;'
-        : p.posizione_finale && p.posizione_finale <= 3
-        ? 'background:#dcfce7; color:#15803d; border:1px solid #86efac;'
-        : 'background:#fff; color:#334155; border:1px solid #cbd5e1;';
+        ? 'background:#fef08a; color:#854d0e; border:1px solid #eab308;' // ORO
+        : p.posizione_finale === 2
+        ? 'background:#e2e8f0; color:#334155; border:1px solid #94a3b8;' // ARGENTO
+        : p.posizione_finale === 3
+        ? 'background:#fed7aa; color:#9a3412; border:1px solid #f97316;' // BRONZO
+        : 'background:#fff; color:#475569; border:1px solid #cbd5e1;';
       return `
         <div style="display:flex; flex-direction:column; gap:4px; padding:11px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; width:100%;">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;">
@@ -1504,9 +1506,6 @@
         </div>
       `;
     }).join('');
-
   };
-
-
 </script>
 </html>
