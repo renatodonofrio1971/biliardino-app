@@ -90,6 +90,22 @@
       #btn-condividi-giocatori, #btn-condividi-admin { width: auto; }
       .md\:grid-cols-2, .lg\:grid-cols-12, .sm\:grid-cols-3, .sm\:grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
     }
+          
+    /* FIX IMPAGINAZIONE SCHEDA PROFILO GIOCATORE SU SMARTPHONE */
+    #modal-profilo-giocatore > div { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 440px; }
+    #modal-profilo-giocatore > div > div:first-child { display: flex; flex-direction: row; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+    #modal-profilo-giocatore > div > div:first-child button { width: auto; flex-shrink: 0; padding: 4px 10px; font-size: 1rem; border: none; background: #f1f5f9; border-radius: 8px; }
+    #prof-nome { margin: 4px 0; font-size: 1.35rem; }
+    #prof-dettagli { margin: 0; font-size: 0.78rem; color: var(--colore-campo); font-weight: 700; }
+    #prof-statistiche { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+    #prof-statistiche > div { padding: 10px 4px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; }
+    #prof-statistiche span:first-child { display: block; font-size: 1.25rem; font-weight: 900; }
+    #prof-statistiche span:last-child { display: block; font-size: 0.68rem; color: #64748b; }
+    #prof-lista-tornei { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 45vh; }
+    #prof-lista-tornei > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+    #prof-lista-tornei p { margin: 2px 0; font-size: 0.78rem; }
+    #prof-lista-tornei p:first-child { font-size: 0.88rem; font-weight: 800; color: #1e293b; }
+
   </style>
 
 </head>
