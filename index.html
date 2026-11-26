@@ -7,6 +7,13 @@
    <script>
     document.write('<scr' + 'ipt src="https://' + 'cdn.jsdelivr.net' + '/npm/@supabase/supabase-js@2/dist/umd/supabase.js"><\/scr' + 'ipt>');
   </script>
+  
+      /* FIX COMPATTEZZA TABELLA E BARRA IN BASSO SU SMARTPHONE */
+    nav#bottom-nav > div { gap: 2px; }
+    .nav-btn { padding: 6px 2px; font-size: 0.65rem; min-width: 0; }
+    #tabella-giocatori td { padding: 8px 3px; font-size: 0.78rem; }
+    #tabella-giocatori select { padding: 5px 4px; font-size: 0.72rem; max-width: 92px; }
+
     <style>
     :root { --colore-casa: #CC0605; --colore-ospite: #154889; --colore-campo: #2D7138; }
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
