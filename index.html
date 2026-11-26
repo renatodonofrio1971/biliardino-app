@@ -1507,5 +1507,42 @@
       `;
     }).join('');
   };
+
+    // 5. PULSANTE "CONCLUDI TORNEO & SALVA PODIO" + PULIZIA AUTOMATICA EMOJI OLD-STYLE
+  (function rifinituraFinaleApp() {
+    // Rimuove tutte le emoji old-style dai titoli e dai pulsanti della pagina
+    const regexEmoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu;
+    document.querySelectorAll('h1, h2, h3, button, span, p, option').forEach(el => {
+      if (el.children.length === 0 && regexEmoji.test(el.textContent)) {
+        el.textContent = el.textContent.replace(regexEmoji, '').trim();
+      }
+    });
+
+    // Aggiunge dinamicamente il tasto "Concludi Torneo & Salva Podio" accanto a "Genera Tabellone Finale"
+    const btnPlayoff = document.getElementById('btn-genera-playoff');
+    if (btnPlayoff && btnPlayoff.parentElement && !document.getElementById('btn-chiudi-torneo')) {
+      const btnChiudi = document.createElement('button');
+      btnChiudi.id = 'btn-chiudi-torneo';
+      btnChiudi.textContent = 'Concludi Torneo & Salva Podio';
+      btnChiudi.className = 'hidden bg-slate-900 text-white text-xs font-black px-3 py-1.5 rounded-lg';
+      btnChiudi.onclick = () => {
+        if (confirm('Vuoi chiudere ufficialmente il torneo e salvare la graduatoria finale nel palmarès dei giocatori?')) {
+          chiudiESalvaGraduatoria();
+        }
+      };
+      btnPlayoff.parentElement.appendChild(btnChiudi);
+    }
+  })();
+
+  const vecchiaCaricaDettagli = caricaDettagliTorneo;
+  caricaDettagliTorneo = async function(torneoId) {
+    await vecchiaCaricaDettagli(torneoId);
+    const btnChiudi = document.getElementById('btn-chiudi-torneo');
+    if (btnChiudi) {
+      btnChiudi.classList.toggle('hidden', !profiloUtente || !torneoCorrente || torneoCorrente.stato === 'concluso');
+    }
+  };
+
+
 </script>
 </html>
