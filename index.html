@@ -1330,19 +1330,25 @@
       }
 
       document.getElementById('prof-lista-tornei').innerHTML = lista.map(p => {
-        const pos = p.posizione_finale
-          ? (p.posizione_finale === 1 ? '🥇 1° Posto' : p.posizione_finale === 2 ? '🥈 2° Posto' : p.posizione_finale === 3 ? '🥉 3° Posto' : `${p.posizione_finale}° Posto`)
-          : 'In corso';
-        return `
-          <div class="p-3 rounded-xl border bg-slate-50 flex items-center justify-between">
-            <div>
-              <p class="font-black text-slate-800">${p.tornei.nome}</p>
-              <p class="text-xs text-slate-500">${p.tornei.data_torneo} · Coppia: <b>${p.nome_squadra}</b></p>
-            </div>
-            <span class="font-black text-xs px-2.5 py-1 rounded-lg bg-white border shadow-sm">${pos}</span>
+      const ruoloInTorneo = p.portiere_id === giocatoreId ? 'Portiere' : 'Attaccante';
+      const pos = p.posizione_finale ? `${p.posizione_finale}° Posto` : 'In corso';
+      const badgeStyle = p.posizione_finale === 1
+        ? 'background:#fef3c7; color:#b45309; border:1px solid #fcd34d;'
+        : p.posizione_finale && p.posizione_finale <= 3
+        ? 'background:#dcfce7; color:#15803d; border:1px solid #86efac;'
+        : 'background:#fff; color:#334155; border:1px solid #cbd5e1;';
+      return `
+        <div style="display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
+          <div style="min-width:0;">
+            <p style="margin:0 0 3px 0; font-weight:800; font-size:0.88rem; color:#1e293b;">${p.tornei.nome}</p>
+            <p style="margin:0 0 2px 0; font-size:0.75rem; color:#64748b;">${p.tornei.data_torneo} · Ruolo: <b>${ruoloInTorneo}</b></p>
+            <p style="margin:0; font-size:0.78rem; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Coppia: <b>${p.nome_squadra}</b></p>
           </div>
-        `;
-      }).join('');
+          <span style="white-space:nowrap; padding:4px 9px; font-size:0.75rem; font-weight:800; border-radius:8px; ${badgeStyle}">${pos}</span>
+        </div>
+      `;
+    }).join('');
+
     }
 
     function chiudiProfiloGiocatore() {
