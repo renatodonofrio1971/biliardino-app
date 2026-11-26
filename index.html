@@ -352,8 +352,14 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
           <div>
-            <label class="font-bold block mb-1">URL Logo (opzionale)</label>
-            <input id="cfg-logo" type="text" placeholder="https://..." class="w-full border rounded-lg px-3 py-2" />
+            <label class="font-bold block mb-1">Logo Circolo (opzionale)</label>
+            <input id="cfg-logo" type="hidden" />
+            <input id="input-file-logo" type="file" accept="image/*" class="hidden" onchange="gestisciUploadLogoLocale(this)" />
+            <button type="button" onclick="document.getElementById('input-file-logo').click()" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:9px 12px; border:1px dashed #94a3b8; background:#f8fafc; border-radius:9px; font-weight:700; color:#334155;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span id="label-upload-logo">Carica Logo</span>
+            </button>
+
           </div>
           <div>
             <label class="font-bold block mb-1">Colore Squadra Casa</label>
@@ -1543,6 +1549,33 @@
     }
   };
 
+  function gestisciUploadLogoLocale(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const size = 160;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        const dataUrl = canvas.toDataURL('image/png', 0.85);
+        document.getElementById('cfg-logo').value = dataUrl;
+        document.getElementById('label-upload-logo').textContent = 'Logo pronto (clicca Salva Aspetto)';
+        const headerLogo = document.getElementById('header-logo');
+        if (headerLogo) {
+          headerLogo.src = dataUrl;
+          headerLogo.classList.remove('hidden');
+          document.getElementById('header-default-icon')?.classList.add('hidden');
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
 
 </script>
 </html>
