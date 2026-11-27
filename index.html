@@ -1180,7 +1180,7 @@
       aggiornaConteggioSelezionati();
     }
 
-    // LISTA SELEZIONE GIOCATORI CON MODIFICA RUOLO/LIVELLO AL VOLO
+     // LISTA SELEZIONE GIOCATORI CON MODIFICA RUOLO/LIVELLO AL VOLO
     renderSelezioneGiocatoriTorneo = function() {
       const selezionatiAttuali = new Set(Array.from(document.querySelectorAll('.chk-giocatore:checked')).map(el => el.value));
       document.getElementById('lista-selezione-giocatori').innerHTML = giocatoriCircolo.map(g => `
@@ -1205,7 +1205,6 @@
       `).join('');
       aggiornaConteggioSelezionati();
     };
-
    
     // GRADUATORIA FINALE DEL TORNEO (Salvataggio & Visualizzazione)
     const vecchiaRenderClassifiche = renderClassifiche;
