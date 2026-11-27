@@ -233,54 +233,55 @@
       </div>
     </section>
 
-    <section id="sec-admin-torneo" class="hidden space-y-6">
+        <section id="sec-admin-torneo" class="hidden space-y-6">
       <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="text-xl font-black mb-4 text-slate-800">⚙️ Configura Nuovo Torneo</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+        <h2 class="text-xl font-black mb-4 text-slate-800" style="margin-top:0;">Configura Nuovo Torneo</h2>
+        <div style="display:flex; flex-direction:column; gap:12px;">
           <div>
-            <label class="font-bold block mb-1">Nome Torneo</label>
-            <input id="t-nome" type="text" placeholder="Es. Torneo del Venerdì" class="w-full border rounded-lg px-3 py-2" />
+            <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">Nome Torneo</label>
+            <input id="t-nome" type="text" placeholder="Es. Torneo del Venerdì" style="width:100%; box-sizing:border-box;" />
           </div>
           <div>
-            <label class="font-bold block mb-1">Formula Torneo</label>
-            <select id="t-formula" onchange="toggleGironiOption()" class="w-full border rounded-lg px-3 py-2">
+            <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">Formula Torneo</label>
+            <select id="t-formula" onchange="toggleGironiOption()" style="width:100%; box-sizing:border-box;">
               <option value="italiana">All'italiana</option>
-              <option value="gironi">Fase a Gironi + Tabellone Finale</option>
+              <option value="gironi">Gironi + Tabellone Finale</option>
             </select>
           </div>
           <div id="box-andata-ritorno">
-            <label class="font-bold block mb-1">Turni All'italiana</label>
-            <select id="t-andata-ritorno" class="w-full border rounded-lg px-3 py-2">
+            <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">Turni All'italiana</label>
+            <select id="t-andata-ritorno" style="width:100%; box-sizing:border-box;">
               <option value="solo_andata">Solo Andata</option>
               <option value="andata_ritorno">Andata e Ritorno</option>
             </select>
           </div>
           <div id="box-qualificati" class="hidden">
-            <label class="font-bold block mb-1">Qualificati per Girone</label>
-            <select id="t-qualificati" class="w-full border rounded-lg px-3 py-2">
+            <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">Qualificati per Girone</label>
+            <select id="t-qualificati" style="width:100%; box-sizing:border-box;">
               <option value="2">Prime 2 di ogni girone</option>
-              <option value="99">Passano tutte (Incroci testa-coda)</option>
+              <option value="99">Passano tutte (Testa-coda)</option>
             </select>
           </div>
-
-          <div>
-            <label class="font-bold block mb-1">Gol per Vincere (Target)</label>
-            <input id="t-target" type="number" value="8" min="5" max="15" class="w-full border rounded-lg px-3 py-2" />
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div>
+              <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">Gol Target</label>
+              <input id="t-target" type="number" value="8" min="5" max="15" style="width:100%; box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">N° Biliardini</label>
+              <input id="t-biliardini" type="number" value="2" min="1" max="10" style="width:100%; box-sizing:border-box;" />
+            </div>
           </div>
           <div>
-            <label class="font-bold block mb-1">Regola Vittoria / Punti</label>
-            <select id="t-regola" class="w-full border rounded-lg px-3 py-2">
+            <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">Regola Vittoria / Punti</label>
+            <select id="t-regola" style="width:100%; box-sizing:border-box;">
               <option value="secca">Partita Secca (es. 8-7 = 2pt / 1pt)</option>
-              <option value="spareggio">Spareggio sul pari (es. 7-7 → ai 9: 9-7=3pt, 9-8=2pt)</option>
+              <option value="spareggio">Spareggio sul 7-7 (ai 9: 3pt / 2pt)</option>
             </select>
           </div>
           <div>
-            <label class="font-bold block mb-1">Numero Biliardini Disponibili</label>
-            <input id="t-biliardini" type="number" value="2" min="1" max="10" class="w-full border rounded-lg px-3 py-2" />
-          </div>
-          <div>
-            <label class="font-bold block mb-1">Memoria Anti-Coppia (Tornei precedenti)</label>
-            <select id="t-storico" class="w-full border rounded-lg px-3 py-2">
+            <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">Memoria Anti-Coppia</label>
+            <select id="t-storico" style="width:100%; box-sizing:border-box;">
               <option value="0">0 - Nessun vincolo</option>
               <option value="1" selected>1 - Evita coppie ultimo torneo</option>
               <option value="2">2 - Evita coppie ultimi 2 tornei</option>
@@ -288,8 +289,8 @@
             </select>
           </div>
           <div>
-            <label class="font-bold block mb-1">Criterio Formazione Coppie</label>
-            <select id="t-bilanciamento" class="w-full border rounded-lg px-3 py-2">
+            <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:4px;">Criterio Formazione Coppie</label>
+            <select id="t-bilanciamento" style="width:100%; box-sizing:border-box;">
               <option value="bilanciato" selected>Equilibrate per livello (Consigliato)</option>
               <option value="casuale">Casuale puro (Solo rispetto ruoli)</option>
             </select>
@@ -1589,10 +1590,6 @@
     #sec-admin-torneo label { display: block; margin-bottom: 4px; font-size: 0.85rem; color: #334155; }
     #sec-admin-torneo input[type="text"], #sec-admin-torneo input[type="number"], #sec-admin-torneo select { width: 100%; display: block; margin-bottom: 10px; }
     #sec-admin-torneo .grid > div { width: 100%; }
-
-    #t-formula, #t-regola, #t-andata-ritorno, #t-storico, #t-bilanciamento { max-width: 100%; width: 100%; box-sizing: border-box; margin-top: 4px; }
-    #t-formula { width: auto; max-width: calc(100% - 125px); }
-
 
 </script>
 </html>
