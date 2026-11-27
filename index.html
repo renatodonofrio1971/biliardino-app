@@ -1138,17 +1138,6 @@
       }).join('');
     }
 
-    function mostraSezione(sec) {
-      ['live', 'admin-torneo', 'admin-giocatori', 'super-admin'].forEach(s => {
-        document.getElementById(`sec-${s}`).classList.add('hidden');
-        const tab = document.getElementById(`tab-${s}`);
-        if (tab) { tab.classList.remove('bg-campo', 'text-white'); tab.classList.add('text-slate-600'); }
-      });
-      document.getElementById(`sec-${sec}`).classList.remove('hidden');
-      const activeTab = document.getElementById(`tab-${sec}`);
-      if (activeTab) { activeTab.classList.add('bg-campo', 'text-white'); activeTab.classList.remove('text-slate-600'); }
-    }
-
     function apriModalLogin() { document.getElementById('modal-login').classList.remove('hidden'); }
     function chiudiModalLogin() { document.getElementById('modal-login').classList.add('hidden'); }
 
@@ -1313,11 +1302,7 @@
     } catch (err) { console.error(err); }
   })();
 
-  const vecchiaMostraSezione = window.mostraSezione;
-  window.mostraSezione = function(sec) {
-    if (sec !== 'live') document.getElementById('no-circolo-alert').classList.add('hidden');
-    if (vecchiaMostraSezione) vecchiaMostraSezione(sec);
-  };
+ 
   // POPOLA MENU CIRCOLI NEL PANNELLO SUPER ADMIN & CREA NUOVO ADMIN CON USER ID
   const vecchiaRenderSA = renderListaCircoliSA;
   renderListaCircoliSA = function() {
@@ -1360,21 +1345,20 @@
     alert(`✅ Amministratore creato!\n\nUser ID: ${rawUser}\nPassword: ${password}`);
   }
 
-    // PAGINA USER: AGGIORNAMENTO LIVE, ELENCO GIOCATORI PUBBLICO E PRIVACY LIVELLO
-  const vecchiaMostraSecUser = window.mostraSezione;
+     // PAGINA USER & NAVIGAZIONE PULITA
   window.mostraSezione = function(sec) {
-    document.getElementById('no-circolo-alert').classList.add('hidden');
+    document.getElementById('no-circolo-alert')?.classList.add('hidden');
     ['live', 'user-palmares', 'admin-torneo', 'admin-giocatori', 'super-admin'].forEach(s => {
-      const el = document.getElementById('sec-' + s);
-      if (el) el.classList.add('hidden');
+      document.getElementById('sec-' + s)?.classList.add('hidden');
       const tab = document.getElementById('tab-' + s);
       if (tab) tab.classList.remove('bg-campo', 'text-white');
     });
-    const targetSec = document.getElementById('sec-' + sec);
-    if (targetSec) targetSec.classList.remove('hidden');
+    document.getElementById('sec-' + sec)?.classList.remove('hidden');
     const activeTab = document.getElementById('tab-' + sec);
     if (activeTab) activeTab.classList.add('bg-campo', 'text-white');
-    if (sec === 'user-palmares') renderListaGiocatoriPubblica();
+    if (sec === 'user-palmares' && typeof renderListaGiocatoriPubblica === 'function') {
+      renderListaGiocatoriPubblica();
+    }
   };
 
     // 1. ISOLAMENTO CIRCOLO E PULSANTI CONDIVISIONE (Admin & Super Admin)
