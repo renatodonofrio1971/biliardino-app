@@ -1555,20 +1555,21 @@
     }
   };
 
-    function gestisciUploadLogoLocale(input) {
+     function gestisciUploadLogoLocale(input) {
     const file = input.files && input.files;
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = function(e) {
       const img = new Image();
-      img.onload = function() {
+      img.onload = async function() {
         const canvas = document.createElement('canvas');
         const size = 200;
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext('2d');
 
-        // Ritaglio centrato per riempire al 100% il cerchio senza deformare la foto
+        // Ritaglio quadrato centrato per riempire perfettamente il cerchio del logo
         const minLato = Math.min(img.width, img.height);
         const sx = (img.width - minLato) / 2;
         const sy = (img.height - minLato) / 2;
@@ -1576,8 +1577,9 @@
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         document.getElementById('cfg-logo').value = dataUrl;
-        document.getElementById('label-upload-logo').textContent = 'Logo caricato! Ora clicca Salva Aspetto';
+        document.getElementById('label-upload-logo').textContent = 'Logo aggiornato!';
 
+        // Aggiorna subito il logo in alto a sinistra
         const headerLogo = document.getElementById('header-logo');
         const defIcon = document.getElementById('header-default-icon');
         if (headerLogo) {
@@ -1585,11 +1587,18 @@
           headerLogo.classList.remove('hidden');
         }
         if (defIcon) defIcon.classList.add('hidden');
+
+        // Salva automaticamente su Supabase senza dover premere altri tasti
+        if (circoloAttivo) {
+          await db.from('circoli').update({ logo_url: dataUrl }).eq('id', circoloAttivo.id);
+          circoloAttivo.logo_url = dataUrl;
+        }
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
+
 
    // 6. RIFINITURA TORNEO LIVE: PULSANTE "CONDIVIDI APP" E PARAGRAFI PROPORZIONALI SOLO A TORNEO ATTIVO
   (function rifinituraTorneoLive() {
