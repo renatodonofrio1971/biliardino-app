@@ -1213,23 +1213,32 @@
       const tutteConcluse = partiteTorneo.length > 0 && partiteTorneo.every(p => p.stato_partita === 'conclusa');
       const haPosizioniSalvate = squadreTorneo.some(s => s.posizione_finale !== null);
 
-      let htmlGraduatoria = '';
+            let htmlGraduatoria = '';
       if (haPosizioniSalvate) {
         const ordinate = [...squadreTorneo].sort((a, b) => (a.posizione_finale || 99) - (b.posizione_finale || 99));
         htmlGraduatoria = `
-          <div class="bg-white rounded-2xl shadow-md overflow-hidden border-2 border-amber-400">
-            <div class="bg-amber-500 text-white px-4 py-2 text-xs font-black uppercase flex justify-between items-center">
-              <span>🏆 Graduatoria Finale Ufficiale</span>
+          <div class="bg-white rounded-2xl shadow-md overflow-hidden border-2 border-amber-400" style="margin-bottom:14px; padding:0; overflow:hidden;">
+            <div style="background:#f59e0b; color:#ffffff; padding:8px 14px; font-size:0.78rem; font-weight:900; text-transform:uppercase; letter-spacing:0.4px;">
+              Graduatoria Finale Ufficiale
             </div>
-            <div class="divide-y">
+            <div style="display:flex; flex-direction:column;">
               ${ordinate.map(s => {
-                const medaglia = s.posizione_finale === 1 ? '🥇' : s.posizione_finale === 2 ? '🥈' : s.posizione_finale === 3 ? '🥉' : `${s.posizione_finale}°`;
+                const badgePodio = s.posizione_finale === 1
+                  ? '<span style="background:#fef08a; color:#854d0e; border:1px solid #eab308; padding:2px 7px; border-radius:6px; font-size:0.72rem; font-weight:900; flex-shrink:0;">1° ORO</span>'
+                  : s.posizione_finale === 2
+                  ? '<span style="background:#e2e8f0; color:#334155; border:1px solid #94a3b8; padding:2px 7px; border-radius:6px; font-size:0.72rem; font-weight:900; flex-shrink:0;">2° ARGENTO</span>'
+                  : s.posizione_finale === 3
+                  ? '<span style="background:#fed7aa; color:#9a3412; border:1px solid #f97316; padding:2px 7px; border-radius:6px; font-size:0.72rem; font-weight:900; flex-shrink:0;">3° BRONZO</span>'
+                  : `<span style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:2px 7px; border-radius:6px; font-size:0.72rem; font-weight:800; flex-shrink:0;">${s.posizione_finale}°</span>`;
                 return `
-                  <div class="px-4 py-2.5 flex items-center justify-between text-sm ${s.posizione_finale <= 3 ? 'bg-amber-50/50 font-black' : ''}">
-                    <span>${medaglia} ${s.nome_squadra}</span>
-                    <div class="flex gap-1 text-xs">
-                      <button onclick="apriProfiloGiocatore('${s.portiere_id}')" class="underline text-slate-500 hover:text-black">P</button>
-                      <button onclick="apriProfiloGiocatore('${s.attaccante_id}')" class="underline text-slate-500 hover:text-black">A</button>
+                  <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; gap:8px; background:${s.posizione_finale <= 3 ? '#fffbeb' : '#ffffff'};">
+                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                      ${badgePodio}
+                      <span style="font-weight:800; font-size:0.88rem; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.nome_squadra}</span>
+                    </div>
+                    <div style="display:flex; gap:4px; flex-shrink:0;">
+                      <button onclick="apriProfiloGiocatore('${s.portiere_id}')" style="padding:3px 7px; font-size:0.7rem; border-radius:6px;">P</button>
+                      <button onclick="apriProfiloGiocatore('${s.attaccante_id}')" style="padding:3px 7px; font-size:0.7rem; border-radius:6px;">A</button>
                     </div>
                   </div>
                 `;
@@ -1239,13 +1248,14 @@
         `;
       } else if (isAdmin && tutteConcluse) {
         htmlGraduatoria = `
-          <button onclick="chiudiESalvaGraduatoria()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black text-sm py-3 rounded-xl shadow">
-            🏁 Chiudi Torneo & Pubblica Graduatoria Finale
+          <button onclick="chiudiESalvaGraduatoria()" style="width:100%; background:#f59e0b; color:#ffffff; border:none; font-weight:900; font-size:0.85rem; padding:12px; border-radius:12px; margin-bottom:12px;">
+            Chiudi Torneo & Pubblica Graduatoria Finale
           </button>
         `;
       }
       box.innerHTML = htmlGraduatoria + box.innerHTML;
     };
+
 
     async function chiudiESalvaGraduatoria() {
       let punteggi = {};
@@ -1597,12 +1607,11 @@
     });
   };
 
-  // 7. PULIZIA BADGE REGOLE TORNEO E MEDAGLIE ORO/ARGENTO/BRONZO NELLA GRADUATORIA
+    // 7. PULIZIA BADGE REGOLE TORNEO
   const vecchiaCaricaDettagliFinale = caricaDettagliTorneo;
   caricaDettagliTorneo = async function(torneoId) {
     await vecchiaCaricaDettagliFinale(torneoId);
 
-    // 1. Trasforma i badge regole (Target, Regola, Biliardini) in 3 pillole pulite senza emoji
     const boxRegole = document.getElementById('info-regole-torneo');
     if (boxRegole && torneoCorrente) {
       boxRegole.style.display = 'flex';
@@ -1617,18 +1626,7 @@
         <span style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; padding:4px 9px; border-radius:8px; font-size:0.74rem; font-weight:800;">${torneoCorrente.num_biliardini} Biliardini</span>
       `;
     }
-
-    // 2. Rimuove vecchie emoji dal podio e applica pillole Oro / Argento / Bronzo
-    const boxClass = document.getElementById('box-classifica');
-    if (boxClass) {
-      boxClass.innerHTML = boxClass.innerHTML
-        .replace(/🏆\s*/g, '')
-        .replace(/🥇/g, '<span style="background:#fef08a; color:#854d0e; border:1px solid #eab308; padding:2px 7px; border-radius:6px; font-size:0.72rem; font-weight:900; margin-right:6px;">1° ORO</span>')
-        .replace(/🥈/g, '<span style="background:#e2e8f0; color:#334155; border:1px solid #94a3b8; padding:2px 7px; border-radius:6px; font-size:0.72rem; font-weight:900; margin-right:6px;">2° ARGENTO</span>')
-        .replace(/🥉/g, '<span style="background:#fed7aa; color:#9a3412; border:1px solid #f97316; padding:2px 7px; border-radius:6px; font-size:0.72rem; font-weight:900; margin-right:6px;">3° BRONZO</span>');
-    }
   };
-
 
 </script>
 </html>
