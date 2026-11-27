@@ -1644,6 +1644,14 @@
       `;
     }
   };
+  // SBLOCCA IL PULSANTE "IMPOSTAZIONI" QUANDO L'ADMIN È LOGGATO
+  setInterval(() => {
+    const tabImp = document.getElementById('tab-admin-impostazioni');
+    const tabGioc = document.getElementById('tab-admin-giocatori');
+    if (tabImp && tabGioc && !tabGioc.classList.contains('hidden')) {
+      tabImp.classList.remove('hidden');
+    }
+  }, 500);
 
 </script>
 </html>
