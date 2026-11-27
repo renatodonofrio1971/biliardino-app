@@ -1555,8 +1555,8 @@
     }
   };
 
-     function gestisciUploadLogoLocale(input) {
-    const file = input.files && input.files[0];
+      function gestisciUploadLogoLocale(input) {
+    const file = input.files ? input.files.item(0) : null;
     if (!file) return;
 
     const reader = new FileReader();
@@ -1569,27 +1569,33 @@
         canvas.height = size;
         const ctx = canvas.getContext('2d');
 
-        // Ritaglio quadrato centrato per riempire perfettamente il cerchio del logo
+        // Ritaglio quadrato centrato per riempire perfettamente il cerchio
         const minLato = Math.min(img.width, img.height);
         const sx = (img.width - minLato) / 2;
         const sy = (img.height - minLato) / 2;
         ctx.drawImage(img, sx, sy, minLato, minLato, 0, 0, size, size);
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        document.getElementById('cfg-logo').value = dataUrl;
-        document.getElementById('label-upload-logo').textContent = 'Logo aggiornato!';
+        const cfgLogo = document.getElementById('cfg-logo');
+        if (cfgLogo) cfgLogo.value = dataUrl;
+        const lbl = document.getElementById('label-upload-logo');
+        if (lbl) lbl.textContent = 'Logo caricato con successo!';
 
-        // Aggiorna subito il logo in alto a sinistra
-        const headerLogo = document.getElementById('header-logo');
+        // Cerca e aggiorna direttamente l'immagine nell'intestazione
+        const headerImg = document.querySelector('header img');
         const defIcon = document.getElementById('header-default-icon');
-        if (headerLogo) {
-          headerLogo.src = dataUrl;
-          headerLogo.classList.remove('hidden');
+        if (headerImg) {
+          headerImg.src = dataUrl;
+          headerImg.classList.remove('hidden');
+          headerImg.style.display = 'block';
         }
-        if (defIcon) defIcon.classList.add('hidden');
+        if (defIcon) {
+          defIcon.classList.add('hidden');
+          defIcon.style.display = 'none';
+        }
 
-        // Salva automaticamente su Supabase senza dover premere altri tasti
-        if (circoloAttivo) {
+        // Salva automaticamente su Supabase
+        if (typeof circoloAttivo !== 'undefined' && circoloAttivo) {
           await db.from('circoli').update({ logo_url: dataUrl }).eq('id', circoloAttivo.id);
           circoloAttivo.logo_url = dataUrl;
         }
@@ -1598,7 +1604,6 @@
     };
     reader.readAsDataURL(file);
   }
-
 
    // 6. RIFINITURA TORNEO LIVE: PULSANTE "CONDIVIDI APP" E PARAGRAFI PROPORZIONALI SOLO A TORNEO ATTIVO
   (function rifinituraTorneoLive() {
