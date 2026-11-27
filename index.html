@@ -1667,5 +1667,45 @@
     }
   }, 500);
 
+    // 8. PULSANTE "INSTALLA APP SUL TELEFONO" (In Impostazioni per Admin e in Palmarès per Giocatori)
+  let deferredPromptApp = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPromptApp = e;
+  });
+
+  function installaAppSuTelefono() {
+    if (deferredPromptApp) {
+      deferredPromptApp.prompt();
+      deferredPromptApp.userChoice.then(() => { deferredPromptApp = null; });
+    } else {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        alert('Per creare l\'icona su iPhone:\n1. Tocca il tasto Condividi (quadrato con freccia in su) in basso.\n2. Scorri e tocca "Aggiungi alla schermata Home".');
+      } else {
+        alert('Per creare l\'icona sul telefono:\n1. Tocca i tre puntini (⋮) in alto a destra nel browser.\n2. Seleziona "Installa app" o "Aggiungi a schermata Home".');
+      }
+    }
+  }
+
+  (function aggiungiBottoniInstallaApp() {
+    const htmlBottone = `
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid #e2e8f0;">
+        <button type="button" onclick="installaAppSuTelefono()" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:11px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; font-weight:800; font-size:0.85rem; color:#1e293b;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--colore-campo)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span>Aggiungi Icona su Telefono</span>
+        </button>
+      </div>
+    `;
+
+    // Lo inserisce in fondo alla scheda Impostazioni (per gli Admin)
+    const secImp = document.querySelector('#sec-admin-impostazioni .bg-white');
+    if (secImp) secImp.insertAdjacentHTML('beforeend', htmlBottone);
+
+    // Lo inserisce anche in fondo alla scheda Palmarès (visibile a tutti i Giocatori)
+    const secPalm = document.querySelector('#sec-user-palmares .bg-white');
+    if (secPalm) secPalm.insertAdjacentHTML('beforeend', htmlBottone);
+  })();
+
 </script>
 </html>
