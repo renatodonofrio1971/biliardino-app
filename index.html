@@ -680,20 +680,31 @@
       await db.from('giocatori').delete().eq('id', id);
       await caricaGiocatori();
     }
-    function renderSelezioneGiocatoriTorneo() {
-      document.getElementById('lista-selezione-giocatori').innerHTML = giocatoriCircolo.map(g => `
-        <label class="flex items-center justify-between p-2.5 border rounded-xl bg-slate-50 hover:bg-white cursor-pointer">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" value="${g.id}" onchange="aggiornaConteggioSelezionati()" class="chk-giocatore w-4 h-4 accent-green-700" />
-            <span class="font-bold text-sm">${g.nome}</span>
+      
+      function renderSelezioneGiocatoriTorneo() {
+      const box = document.getElementById('lista-selezione-giocatori');
+      box.innerHTML = giocatoriCircolo.map(g => `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; min-width:0; margin:0;">
+            <input type="checkbox" value="${g.id}" class="chk-giocatore" checked style="width:16px; height:16px; flex-shrink:0;" />
+            <span style="font-weight:700; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${g.nome}</span>
+          </label>
+          <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'ruolo', this.value)" style="width:112px; padding:6px 6px; font-size:0.78rem; font-weight:700;">
+              <option value="Portiere" ${g.ruolo==='Portiere'?'selected':''}>Portiere</option>
+              <option value="Attaccante" ${g.ruolo==='Attaccante'?'selected':''}>Attaccante</option>
+              <option value="Indifferente" ${g.ruolo==='Indifferente'?'selected':''}>Indifferente</option>
+            </select>
+            <select onchange="aggiornaGiocatoreRapido('${g.id}', 'livello', this.value)" style="width:66px; padding:6px 4px; font-size:0.78rem; font-weight:700;">
+              <option value="1" ${g.livello===1?'selected':''}>Lv.1</option>
+              <option value="2" ${g.livello===2?'selected':''}>Lv.2</option>
+              <option value="3" ${g.livello===3?'selected':''}>Lv.3</option>
+            </select>
           </div>
-          <span class="text-xs px-2 py-0.5 rounded bg-white border font-semibold">
-            ${g.ruolo === 'Portiere' ? '🧤 P' : g.ruolo === 'Attaccante' ? '⚽ A' : '🔄 Ind'} · Lv.${g.livello}
-          </span>
-        </label>
+        </div>
       `).join('');
-      aggiornaConteggioSelezionati();
     }
+
 
     function aggiornaConteggioSelezionati() {
       document.getElementById('count-selezionati').textContent = document.querySelectorAll('.chk-giocatore:checked').length;
