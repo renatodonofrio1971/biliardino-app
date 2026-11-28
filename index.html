@@ -1707,5 +1707,82 @@
     if (secPalm) secPalm.insertAdjacentHTML('beforeend', htmlBottone);
   })();
 
+    // 9. ASSEGNAZIONE INTELLIGENTE AI BILIARDINI (Evita partite consecutive e bilancia i turni)
+  window.assegnaPartiteAiBiliardini = async function() {
+    if (!torneoCorrente || torneoCorrente.stato === 'concluso') return;
+
+    const numTavoli = torneoCorrente.num_biliardini || 2;
+    const inCorso = partiteTorneo.filter(p => p.stato_partita === 'in_corso');
+    const concluse = partiteTorneo.filter(p => p.stato_partita === 'conclusa');
+    const inAttesa = partiteTorneo.filter(p => p.stato_partita === 'in_attesa');
+
+    if (inAttesa.length === 0 || inCorso.length >= numTavoli) return;
+
+    // 1. Individua i biliardini attualmente occupati e le squadre già al tavolo
+    const tavoliOccupati = new Set(inCorso.map(p => p.numero_biliardino));
+    const squadreOccupate = new Set();
+    inCorso.forEach(p => {
+      squadreOccupate.add(p.squadra_casa_id);
+      squadreOccupate.add(p.squadra_ospite_id);
+    });
+
+    // 2. Calcola quante partite ha già giocato ogni squadra
+    const partiteGiocate = {};
+    squadreTorneo.forEach(s => { partiteGiocate[s.id] = 0; });
+    [...concluse, ...inCorso].forEach(p => {
+      partiteGiocate[p.squadra_casa_id] = (partiteGiocate[p.squadra_casa_id] || 0) + 1;
+      partiteGiocate[p.squadra_ospite_id] = (partiteGiocate[p.squadra_ospite_id] || 0) + 1;
+    });
+
+    // 3. Individua le squadre delle ultime 2 partite concluse (per farle riposare)
+    const ultimeConcluse = concluse.slice(-2);
+    const appenaUscite = new Set();
+    ultimeConcluse.forEach(p => {
+      appenaUscite.add(p.squadra_casa_id);
+      appenaUscite.add(p.squadra_ospite_id);
+    });
+
+    // 4. Assegna ogni biliardino libero scegliendo la partita più equa
+    for (let tavolo = 1; tavolo <= numTavoli; tavolo++) {
+      if (tavoliOccupati.has(tavolo)) continue;
+
+      const candidati = inAttesa.filter(p =>
+        !squadreOccupate.has(p.squadra_casa_id) &&
+        !squadreOccupate.has(p.squadra_ospite_id)
+      );
+
+      if (candidati.length === 0) break;
+
+      // Ordina i candidati dal più meritevole (minor numero di partite giocate + riposo)
+      candidati.sort((a, b) => {
+        const giocateA = (partiteGiocate[a.squadra_casa_id] || 0) + (partiteGiocate[a.squadra_ospite_id] || 0);
+        const giocateB = (partiteGiocate[b.squadra_casa_id] || 0) + (partiteGiocate[b.squadra_ospite_id] || 0);
+
+        // Penalità forte (+100) se una delle due squadre ha appena finito di giocare
+        const riposoA = (appenaUscite.has(a.squadra_casa_id) ? 100 : 0) + (appenaUscite.has(a.squadra_ospite_id) ? 100 : 0);
+        const riposoB = (appenaUscite.has(b.squadra_casa_id) ? 100 : 0) + (appenaUscite.has(b.squadra_ospite_id) ? 100 : 0);
+
+        return (giocateA + riposoA) - (giocateB + riposoB);
+      });
+
+      const scelta = candidati[0];
+      await db.from('partite').update({
+        stato_partita: 'in_corso',
+        numero_biliardino: tavolo
+      }).eq('id', scelta.id);
+
+      // Aggiorna lo stato locale prima di assegnare l'eventuale secondo tavolo libero
+      scelta.stato_partita = 'in_corso';
+      scelta.numero_biliardino = tavolo;
+      squadreOccupate.add(scelta.squadra_casa_id);
+      squadreOccupate.add(scelta.squadra_ospite_id);
+      partiteGiocate[scelta.squadra_casa_id]++;
+      partiteGiocate[scelta.squadra_ospite_id]++;
+      const idxRimuovi = inAttesa.findIndex(x => x.id === scelta.id);
+      if (idxRimuovi > -1) inAttesa.splice(idxRimuovi, 1);
+    }
+  };
+
+
 </script>
 </html>
